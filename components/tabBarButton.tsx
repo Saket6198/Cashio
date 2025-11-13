@@ -9,7 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 type TabBarButtonProps = {
-  key: string;
+  //   key: string;
   onPress: () => void;
   onLongPress: () => void;
   routeName: keyof typeof icon;
@@ -19,7 +19,7 @@ type TabBarButtonProps = {
 };
 
 const TabBarButton = ({
-  key,
+  //   key,
   onPress,
   onLongPress,
   routeName,
@@ -51,7 +51,7 @@ const TabBarButton = ({
           scale: scaleValue,
         },
       ],
-      top
+      top,
     };
   });
   return (
@@ -66,7 +66,10 @@ const TabBarButton = ({
         })}
       </Animated.View>
       <Animated.Text
-        style={[{ color: isFocused ? "#673ab7" : "#222", fontSize: 12 }, animatedTextStyle]}
+        style={[
+          { color: isFocused ? "#673ab7" : "#222", fontSize: 12 },
+          animatedTextStyle,
+        ]}
       >
         {label}
       </Animated.Text>

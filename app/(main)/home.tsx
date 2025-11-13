@@ -1,11 +1,12 @@
 import { transactions } from "@/constants/dummyData";
+import { useRouter } from "expo-router";
 import { PlusIcon } from "phosphor-react-native";
 import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
-import { widthPercentageToDP } from "react-native-responsive-screen";
 
-const Sangam = () => {
+const Home = () => {
+  const router = useRouter();
   const totalBalance = 120000;
   const paidAmount = 45000;
   const remainingBalance = totalBalance - paidAmount;
@@ -51,10 +52,18 @@ const Sangam = () => {
   };
 
   return (
-    <ScrollView className="flex-1 bg-white">
+    <ScrollView
+      className="flex-1 bg-white"
+      contentContainerStyle={{ paddingBottom: 120 }}
+    >
       <View className="flex flex-row justify-between items-center px-6 py-4 bg-gray-100">
-        <Text className="flex justify-center items-center font-bold text-2xl">Sangam Restaurant</Text>
-        <TouchableOpacity className="items-center justify-center">
+        <Text className="flex justify-center items-center font-bold text-2xl">
+          Sangam Restaurant
+        </Text>
+        <TouchableOpacity
+          className="items-center justify-center"
+          onPress={() => router.push({ pathname: "/(transactions)/new" })}
+        >
           <PlusIcon size={32} color="#000" />
         </TouchableOpacity>
       </View>
@@ -195,4 +204,4 @@ const Sangam = () => {
   );
 };
 
-export default Sangam;
+export default Home;

@@ -4,8 +4,8 @@ import React from "react";
 
 const HomeLayout = () => {
   return (
-    <Tabs tabBar={props => <TabBar {...props} />} screenOptions={{ headerShown: false }} initialRouteName="sangam" >
-      <Tabs.Screen options={{title: "Sangam"}} name="sangam" />
+    <Tabs tabBar={props => <TabBar {...props} />} screenOptions={{ headerShown: false }} initialRouteName="home" >
+      <Tabs.Screen options={{title: "Home"}} name="home" />
       <Tabs.Screen options={{title: "Indus"}} name="indus" />
       <Tabs.Screen options={{title: "Settings"}} name="settings" />
     </Tabs>

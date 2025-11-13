@@ -1,17 +1,9 @@
-import {
-  Feather,
-  FontAwesome5,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
+import { Feather, FontAwesome5 } from "@expo/vector-icons";
+import Entypo from "@expo/vector-icons/Entypo";
 
 export const icon = {
-  sangam: (props: any) => (
-    <MaterialCommunityIcons
-      name="food-fork-drink"
-      size={22}
-      color={"#673ab7"}
-      {...props}
-    />
+  home: (props: any) => (
+    <Entypo name="home" size={22} color={"#673ab7"} {...props} />
   ),
   indus: (props: any) => (
     <FontAwesome5 name="bed" size={22} color={"#673ab7"} {...props} />

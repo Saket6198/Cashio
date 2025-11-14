@@ -2,7 +2,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-export const useProfileStore = create(
+interface ProfileStore {
+  activeProfile: string | null;
+  setActiveProfile: (profileId: any) => void;
+}
+
+export const useProfileStore = create<ProfileStore>()(
   persist(
     (set) => ({
       activeProfile: null,

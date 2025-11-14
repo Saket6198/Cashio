@@ -167,7 +167,6 @@ const AddTransaction = () => {
               )}
             />
 
-            {/* Quick Amount Buttons */}
             <View className="flex-row flex-wrap gap-2 mt-4">
               {quickAmounts.map((quickAmount) => (
                 <TouchableOpacity
@@ -183,7 +182,6 @@ const AddTransaction = () => {
             </View>
           </View>
 
-          {/* Payment Type Selection */}
           <View className="mb-6">
             <Text className="text-gray-700 font-bold mb-3 text-lg">
               Payment Method
@@ -193,7 +191,6 @@ const AddTransaction = () => {
               name="paymentType"
               render={({ field: { onChange, value } }) => (
                 <View className="flex-row gap-3">
-                  {/* Cash Option */}
                   <Pressable
                     className="flex-1"
                     onPress={() => onChange("cash")}
@@ -239,7 +236,6 @@ const AddTransaction = () => {
                     </LinearGradient>
                   </Pressable>
 
-                  {/* Online Option */}
                   <Pressable
                     className="flex-1"
                     onPress={() => onChange("online")}
@@ -289,7 +285,6 @@ const AddTransaction = () => {
             />
           </View>
 
-          {/* Description/Note */}
           <View className="mb-6">
             <Text className="text-gray-700 font-bold mb-3 text-lg">
               Description
@@ -345,7 +340,6 @@ const AddTransaction = () => {
             />
           </View>
 
-          {/* Summary Card */}
           <View className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-5 mb-6 border border-blue-100">
             <Text className="text-blue-900 font-bold text-base mb-3">
               Transaction Summary
@@ -373,27 +367,16 @@ const AddTransaction = () => {
             </View>
           </View>
 
-          {/* Submit Button */}
-          <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-            <TouchableOpacity
-              className="rounded-2xl py-5 shadow-xl active:shadow-lg"
-              onPress={handleSubmit(onSubmit)}
-              activeOpacity={0.9}
-            >
-              <LinearGradient
-                colors={["#1e40af", "#3b82f6"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                className="rounded-2xl py-1 flex-row items-center justify-center"
-                style={{ elevation: 8 }}
-              >
-                <CheckCircle size={28} color="#fff" weight="fill" />
-                <Text className="text-white font-bold text-xl ml-3">
-                  Save Transaction
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </Animated.View>
+          <TouchableOpacity
+            className="rounded-2xl py-5 shadow-xl active:shadow-lg bg-blue-400 flex-row justify-center items-center"
+            onPress={handleSubmit(onSubmit)}
+            activeOpacity={0.9}
+          >
+            <CheckCircle size={28} color="#fff" weight="fill" />
+            <Text className="text-white font-bold text-xl ml-3">
+              Save Transaction
+            </Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAwareScrollView>
     </SafeAreaView>

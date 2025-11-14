@@ -20,6 +20,8 @@ function RootLayoutNav() {
       >
         <Stack.Screen name="Index" />
         <Stack.Screen name="(main)" />
+        <Stack.Screen name="(profile)" />
+        <Stack.Screen name="(transactions)" />
       </Stack>
       <PortalHost />
     </>

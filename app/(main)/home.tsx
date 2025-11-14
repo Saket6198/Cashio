@@ -1,4 +1,5 @@
 import { transactions } from "@/constants/dummyData";
+import { useProfileStore } from "@/store/userProfile";
 import { useRouter } from "expo-router";
 import { PlusIcon } from "phosphor-react-native";
 import React from "react";
@@ -6,6 +7,8 @@ import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
 
 const Home = () => {
+  const {activeProfile} = useProfileStore();
+  console.log("Active Profile in Home:", activeProfile);
   const router = useRouter();
   const totalBalance = 120000;
   const paidAmount = 45000;
@@ -62,7 +65,7 @@ const Home = () => {
         </Text>
         <TouchableOpacity
           className="items-center justify-center"
-          onPress={() => router.push({ pathname: "/(transactions)/new" })}
+          onPress={() => router.push({ pathname: "/(transactions)/newTransaction" })}
         >
           <PlusIcon size={32} color="#000" />
         </TouchableOpacity>

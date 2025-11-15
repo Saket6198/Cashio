@@ -4,12 +4,12 @@
     "slug": "Cashio",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Wallet1.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "cashio",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/Wallet1.png",
+      "image": "./assets/images/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/Wallet1.png",
+        "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -28,7 +28,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/Wallet1.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "expo-router"

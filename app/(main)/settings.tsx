@@ -41,6 +41,8 @@ const Settings = () => {
       name: "",
       entityType: "individual",
       rentAmount: 0,
+      note: "",
+
       fineActive: false,
       finePerDay: 0,
       fineStartDate: undefined,
@@ -55,6 +57,8 @@ const Settings = () => {
       setValue("name", data.name || "");
       setValue("entityType", data.entityType || "individual");
       setValue("rentAmount", data.rentAmount || 0);
+      setValue("note", data.note || "");
+
       setValue("fineActive", data.fineActive || false);
       setValue("finePerDay", data.finePerDay || 0);
       setProfileName(data.name || "");
@@ -79,6 +83,7 @@ const Settings = () => {
       { profileId: activeProfile, profileData: data },
       {
         onSuccess: () => {
+          setProfileName(data.name || "");
           Alert.alert("Success", "Profile updated successfully");
         },
       }
@@ -96,7 +101,6 @@ const Settings = () => {
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 120 }}
       >
-        {/* Header */}
         <View className="bg-white px-6 py-4 shadow-sm">
           <View className="flex-row justify-between items-center">
             <Text className="text-xl font-bold text-gray-900">Settings</Text>
@@ -112,7 +116,6 @@ const Settings = () => {
           </View>
         </View>
 
-        {/* Form */}
         {isPending ? (
           <View className="flex-1 items-center justify-center py-20">
             <ActivityIndicator size="large" color="#3b82f6" />
@@ -127,7 +130,6 @@ const Settings = () => {
                 Profile Information
               </Text>
 
-              {/* Name Field */}
               <View className="mb-5">
                 <Text className="text-sm font-medium text-gray-700 mb-2">
                   Name
@@ -160,7 +162,6 @@ const Settings = () => {
                 )}
               </View>
 
-              {/* Entity Type */}
               <View className="mb-5">
                 <Text className="text-sm font-medium text-gray-700 mb-2">
                   Entity Type
@@ -216,7 +217,6 @@ const Settings = () => {
                 )}
               </View>
 
-              {/* Rent Amount */}
               <View className="mb-5">
                 <Text className="text-sm font-medium text-gray-700 mb-2">
                   Rent Amount
@@ -249,8 +249,41 @@ const Settings = () => {
                   </Text>
                 )}
               </View>
+              <View className="mb-5">
+                <Text className="text-sm font-medium text-gray-700 mb-2">
+                  Note
+                </Text>
+                <Controller
+                  control={control}
+                  name="note"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                      className={`border rounded-md px-4 py-4 ${
+                        focusedField === "note"
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-300 bg-white"
+                      }`}
+                      placeholder="Enter note (optional)"
+                      multiline
+                      numberOfLines={3}
+                      textAlignVertical="top"
+                      onBlur={() => {
+                        setFocusedField(null);
+                        onBlur();
+                      }}
+                      onFocus={() => setFocusedField("note")}
+                      onChangeText={onChange}
+                      value={value}
+                    />
+                  )}
+                />
+                {errors.note && (
+                  <Text className="text-red-500 text-sm mt-1">
+                    {errors.note.message}
+                  </Text>
+                )}
+              </View>
 
-              {/* Fine Amount Toggle */}
               <View className="mb-5">
                 <View className="flex-row justify-between items-center">
                   <Text className="text-sm font-medium text-gray-700">
@@ -274,14 +307,12 @@ const Settings = () => {
                 </Text>
               </View>
 
-              {/* Fine Details - Conditional */}
               {watchFineActive && (
                 <View className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                   <Text className="text-base font-medium text-blue-900 mb-4">
                     Fine Configuration
                   </Text>
 
-                  {/* Fine Per Day */}
                   <View className="mb-4">
                     <Text className="text-sm font-medium text-gray-700 mb-2">
                       Fine Per Day
@@ -317,7 +348,6 @@ const Settings = () => {
                     )}
                   </View>
 
-                  {/* Fine Start Date */}
                   <View className="mb-4">
                     <Text className="text-sm font-medium text-gray-700 mb-2">
                       Fine Start Date
@@ -346,7 +376,6 @@ const Settings = () => {
                     )}
                   </View>
 
-                  {/* Fine End Date */}
                   <View className="mb-2">
                     <Text className="text-sm font-medium text-gray-700 mb-2">
                       Fine End Date
@@ -377,7 +406,6 @@ const Settings = () => {
                 </View>
               )}
 
-              {/* Submit Button */}
               <TouchableOpacity
                 className={`rounded-lg py-4 mt-8 flex-row items-center justify-center ${
                   isUpdating ? "bg-blue-400" : "bg-blue-600"

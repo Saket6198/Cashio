@@ -62,6 +62,7 @@ const ProfileSwitcher = () => {
         <ScrollView
           className="flex-1 px-6 pt-6"
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 120 }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}

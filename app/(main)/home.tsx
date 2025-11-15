@@ -27,7 +27,6 @@ const Home = () => {
   const [refreshing, setRefreshing] = React.useState(false);
   const router = useRouter();
 
-  // Fetch transactions for active profile
   const {
     data: transactionsData,
     isLoading: isLoadingTransactions,
@@ -38,20 +37,15 @@ const Home = () => {
     limit: 5,
   });
 
-  // Animation values
   const pieChartAnim = useRef(new Animated.Value(0)).current;
   const transactionsAnim = useRef(new Animated.Value(0)).current;
 
-  console.log("Active Profile in Home:", activeProfile);
-
-  // Fetch balance when active profile changes
   React.useEffect(() => {
     if (activeProfile) {
       fetchBalance(activeProfile);
     }
   }, [activeProfile, fetchBalance]);
 
-  // Animate pie chart on load
   useEffect(() => {
     if (currentBalance) {
       Animated.spring(pieChartAnim, {
@@ -63,7 +57,6 @@ const Home = () => {
     }
   }, [currentBalance]);
 
-  // Animate transactions on load
   useEffect(() => {
     if (transactionsData?.transactions) {
       Animated.spring(transactionsAnim, {
@@ -88,23 +81,19 @@ const Home = () => {
     }
   };
 
-  // Use dynamic balance data or fallback to static data
-  const totalBalance = currentBalance?.rentAmount || 120000;
-  const paidAmount = currentBalance?.totalPaid || 45000;
+  const totalBalance = currentBalance?.rentAmount || 0;
+  const paidAmount = currentBalance?.totalPaid || 0;
   const dueAmount = currentBalance?.due || 0;
   const fineAmount = currentBalance?.fineAmount || 0;
   const statusColor = getStatusColor();
 
-  // Calculate percentages for 3 segments
   const paidPercentage = ((paidAmount / totalBalance) * 100).toFixed(1);
   const duePercentage = ((dueAmount / totalBalance) * 100).toFixed(1);
   const finePercentage =
     fineAmount > 0 ? ((fineAmount / totalBalance) * 100).toFixed(1) : "0";
 
-  // Create pie chart data with 3 segments
   const pieData = [];
 
-  // Always show paid amount if greater than 0
   if (paidAmount > 0) {
     pieData.push({
       value: paidAmount,
@@ -114,7 +103,6 @@ const Home = () => {
     });
   }
 
-  // Show due amount if greater than 0
   if (dueAmount > 0) {
     pieData.push({
       value: dueAmount,
@@ -124,7 +112,6 @@ const Home = () => {
     });
   }
 
-  // Show fine amount if greater than 0
   if (fineAmount > 0) {
     pieData.push({
       value: fineAmount,
@@ -134,7 +121,6 @@ const Home = () => {
     });
   }
 
-  // If no data, show placeholder
   if (pieData.length === 0) {
     pieData.push({
       value: totalBalance,
@@ -144,7 +130,6 @@ const Home = () => {
     });
   }
 
-  // Get the 5 latest transactions from API
   const latestTransactions = transactionsData?.transactions || [];
 
   const formatDate = (dateString: string | Date) => {
@@ -199,7 +184,6 @@ const Home = () => {
         </Text>
       </View> */}
 
-      {/* Pie Chart Section */}
       <Animated.View
         className="items-center py-8 bg-gray-50"
         style={{
@@ -255,10 +239,7 @@ const Home = () => {
             );
           }}
         />
-
-        {/* Legend */}
         <View className="mt-6 space-y-2">
-          {/* Paid */}
           {paidAmount > 0 && (
             <View className="flex-row items-center justify-center">
               <View
@@ -277,7 +258,6 @@ const Home = () => {
             </View>
           )}
 
-          {/* Due */}
           {dueAmount > 0 && (
             <View className="flex-row items-center justify-center">
               <View
@@ -296,7 +276,6 @@ const Home = () => {
             </View>
           )}
 
-          {/* Fine */}
           {fineAmount > 0 && (
             <View className="flex-row items-center justify-center">
               <View
@@ -315,7 +294,6 @@ const Home = () => {
             </View>
           )}
 
-          {/* Show total if multiple segments */}
           {pieData.length > 1 && (
             <View className="mt-3 pt-2 border-t border-gray-200">
               <Text className="text-center text-sm font-bold text-gray-800">
@@ -326,7 +304,6 @@ const Home = () => {
         </View>
       </Animated.View>
 
-      {/* Recent Transactions */}
       <Animated.View
         className="px-6 py-6"
         style={{

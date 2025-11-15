@@ -22,8 +22,6 @@ interface Transaction {
   createdAt: string;
   updatedAt: string;
 }
-
-// Shimmer Loading Component
 const ShimmerCard = () => {
   const animatedValue = useRef(new Animated.Value(0)).current;
 
@@ -202,7 +200,6 @@ const Records = () => {
 
   return (
     <SafeAreaProvider className="flex-1 bg-gray-50">
-      {/* Header */}
       <View className="bg-gray-200 px-6 pt-4 pb-3 shadow-sm border-b border-gray-100">
         <Text className="text-2xl font-bold text-gray-900 mb-1">
           Transaction Records
@@ -215,7 +212,6 @@ const Records = () => {
         )}
       </View>
 
-      {/* Content with proper spacing */}
       <ScrollView
         className="flex-1 px-6"
         showsVerticalScrollIndicator={true}
@@ -250,7 +246,6 @@ const Records = () => {
               renderTransactionCard(transaction)
             )}
 
-            {/* Revamped Pagination Controls */}
             {pagination.totalPages > 1 && (
               <View className="mt-4 mb-4">
                 {/* Page Info Card */}
@@ -280,7 +275,6 @@ const Records = () => {
                   </View>
                 </View>
 
-                {/* Navigation Buttons */}
                 <View className="flex-row gap-3">
                   <TouchableOpacity
                     onPress={handlePreviousPage}

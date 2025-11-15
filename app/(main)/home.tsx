@@ -1,47 +1,154 @@
-import { transactions } from "@/constants/dummyData";
+import TransactionShimmer from "@/components/TransactionShimmer";
+import { useFetchTransactions } from "@/hooks/useFetchTransactions";
+import { useBalanceStore } from "@/store/balanceStore";
 import { useProfileStore } from "@/store/userProfile";
 import { useRouter } from "expo-router";
 import { PlusIcon } from "phosphor-react-native";
-import React from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef } from "react";
+import {
+  Animated,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { PieChart } from "react-native-gifted-charts";
 
 const Home = () => {
-  const {activeProfile} = useProfileStore();
-  console.log("Active Profile in Home:", activeProfile);
+  const { activeProfile, profileName } = useProfileStore();
+  const {
+    currentBalance,
+    isLoading,
+    fetchBalance,
+    getStatusColor,
+    refreshBalance,
+  } = useBalanceStore();
+  const [refreshing, setRefreshing] = React.useState(false);
   const router = useRouter();
-  const totalBalance = 120000;
-  const paidAmount = 45000;
-  const remainingBalance = totalBalance - paidAmount;
 
-  // Calculate percentages
+  // Fetch transactions for active profile
+  const {
+    data: transactionsData,
+    isLoading: isLoadingTransactions,
+    refetch: refetchTransactions,
+  } = useFetchTransactions({
+    profileId: activeProfile || "",
+    page: 1,
+    limit: 5,
+  });
+
+  // Animation values
+  const pieChartAnim = useRef(new Animated.Value(0)).current;
+  const transactionsAnim = useRef(new Animated.Value(0)).current;
+
+  console.log("Active Profile in Home:", activeProfile);
+
+  // Fetch balance when active profile changes
+  React.useEffect(() => {
+    if (activeProfile) {
+      fetchBalance(activeProfile);
+    }
+  }, [activeProfile, fetchBalance]);
+
+  // Animate pie chart on load
+  useEffect(() => {
+    if (currentBalance) {
+      Animated.spring(pieChartAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [currentBalance]);
+
+  // Animate transactions on load
+  useEffect(() => {
+    if (transactionsData?.transactions) {
+      Animated.spring(transactionsAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        delay: 150,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [transactionsData]);
+
+  const onRefresh = async () => {
+    if (!activeProfile) return;
+    setRefreshing(true);
+    try {
+      await Promise.all([refreshBalance(activeProfile), refetchTransactions()]);
+    } catch (error) {
+      console.error("Error refreshing:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Use dynamic balance data or fallback to static data
+  const totalBalance = currentBalance?.rentAmount || 120000;
+  const paidAmount = currentBalance?.totalPaid || 45000;
+  const dueAmount = currentBalance?.due || 0;
+  const fineAmount = currentBalance?.fineAmount || 0;
+  const statusColor = getStatusColor();
+
+  // Calculate percentages for 3 segments
   const paidPercentage = ((paidAmount / totalBalance) * 100).toFixed(1);
-  const remainingPercentage = ((remainingBalance / totalBalance) * 100).toFixed(
-    1
-  );
+  const duePercentage = ((dueAmount / totalBalance) * 100).toFixed(1);
+  const finePercentage =
+    fineAmount > 0 ? ((fineAmount / totalBalance) * 100).toFixed(1) : "0";
 
-  const pieData = [
-    {
+  // Create pie chart data with 3 segments
+  const pieData = [];
+
+  // Always show paid amount if greater than 0
+  if (paidAmount > 0) {
+    pieData.push({
       value: paidAmount,
-      color: "#10b981",
+      color: "#10b981", // Green for paid
       text: `${paidPercentage}%`,
-    },
-    {
-      value: remainingBalance,
-      color: "#0000ff",
-      text: `${remainingPercentage}%`,
-    },
-  ];
+      label: "Paid",
+    });
+  }
 
-  // Get the 5 latest transactions
-  const latestTransactions = [...transactions]
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
-    .slice(0, 5);
+  // Show due amount if greater than 0
+  if (dueAmount > 0) {
+    pieData.push({
+      value: dueAmount,
+      color: "#3b82f6", // Blue for due
+      text: `${duePercentage}%`,
+      label: "Due",
+    });
+  }
 
-  const formatDate = (dateString: string) => {
+  // Show fine amount if greater than 0
+  if (fineAmount > 0) {
+    pieData.push({
+      value: fineAmount,
+      color: "#ef4444", // Red for fine
+      text: `${finePercentage}%`,
+      label: "Fine",
+    });
+  }
+
+  // If no data, show placeholder
+  if (pieData.length === 0) {
+    pieData.push({
+      value: totalBalance,
+      color: "#6b7280", // Gray for no data
+      text: "100%",
+      label: "Pending",
+    });
+  }
+
+  // Get the 5 latest transactions from API
+  const latestTransactions = transactionsData?.transactions || [];
+
+  const formatDate = (dateString: string | Date) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       month: "short",
@@ -50,22 +157,35 @@ const Home = () => {
     });
   };
 
-  const formatAmount = (amount: string) => {
-    return `₹${parseFloat(amount).toLocaleString("en-IN")}`;
+  const formatAmount = (amount: string | number) => {
+    if (!amount) return "₹0";
+    const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+    return `₹${numAmount.toLocaleString("en-IN")}`;
   };
 
   return (
     <ScrollView
       className="flex-1 bg-white"
       contentContainerStyle={{ paddingBottom: 120 }}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={["#3b82f6"]}
+          tintColor="#3b82f6"
+        />
+      }
     >
       <View className="flex flex-row justify-between items-center px-6 py-4 bg-gray-100">
         <Text className="flex justify-center items-center font-bold text-2xl">
-          Sangam Restaurant
+          {profileName ? profileName : "Home"}
         </Text>
         <TouchableOpacity
           className="items-center justify-center"
-          onPress={() => router.push({ pathname: "/(transactions)/newTransaction" })}
+          onPress={() =>
+            router.push({ pathname: "/(transactions)/newTransaction" })
+          }
         >
           <PlusIcon size={32} color="#000" />
         </TouchableOpacity>
@@ -80,7 +200,20 @@ const Home = () => {
       </View> */}
 
       {/* Pie Chart Section */}
-      <View className="items-center py-8 bg-gray-50">
+      <Animated.View
+        className="items-center py-8 bg-gray-50"
+        style={{
+          opacity: pieChartAnim,
+          transform: [
+            {
+              scale: pieChartAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.8, 1],
+              }),
+            },
+          ],
+        }}
+      >
         <Text className="text-xl font-semibold text-gray-800 mb-2">
           Rent Balance Overview
         </Text>
@@ -94,87 +227,171 @@ const Home = () => {
           radius={120}
           innerRadius={80}
           centerLabelComponent={() => {
+            const totalOutstanding = dueAmount + fineAmount;
             return (
               <View className="items-center">
-                <Text className="text-2xl font-bold text-red-600">
-                  {formatAmount(remainingBalance.toString())}
+                <Text
+                  className="text-2xl font-bold"
+                  style={{
+                    color:
+                      totalOutstanding > 0
+                        ? fineAmount > 0
+                          ? "#ef4444"
+                          : "#3b82f6"
+                        : "#10b981",
+                  }}
+                >
+                  ₹{totalOutstanding.toLocaleString("en-IN")}
                 </Text>
-                <Text className="text-xs text-gray-600 mt-1">Remaining</Text>
+                <Text className="text-xs text-gray-600 mt-1 text-center">
+                  {totalOutstanding > 0 ? "Outstanding" : "Paid"}
+                </Text>
+                {fineAmount > 0 && (
+                  <Text className="text-xs text-red-600 mt-1 text-center">
+                    Fine: ₹{fineAmount.toLocaleString("en-IN")}
+                  </Text>
+                )}
               </View>
             );
           }}
         />
 
         {/* Legend */}
-        <View className="flex-row mt-6 gap-6">
-          <View className="flex-row items-center">
-            <View className="w-4 h-4 bg-blue-700 rounded mr-2" />
-            <Text className="text-sm text-gray-700">
-              Paid ({formatAmount(paidAmount.toString())})
-            </Text>
-          </View>
-          <View className="flex-row items-center">
-            <View className="w-4 h-4 bg-red-500 rounded mr-2" />
-            <Text className="text-sm text-gray-700">
-              Due ({formatAmount(remainingBalance.toString())})
-            </Text>
-          </View>
+        <View className="mt-6 space-y-2">
+          {/* Paid */}
+          {paidAmount > 0 && (
+            <View className="flex-row items-center justify-center">
+              <View
+                className="w-5 h-5 bg-green-500 rounded-full mr-3 border-2 border-white"
+                style={{
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 2,
+                  elevation: 2,
+                }}
+              />
+              <Text className="text-sm font-semibold text-green-700">
+                Paid: ₹{paidAmount.toLocaleString("en-IN")} ({paidPercentage}%)
+              </Text>
+            </View>
+          )}
+
+          {/* Due */}
+          {dueAmount > 0 && (
+            <View className="flex-row items-center justify-center">
+              <View
+                className="w-5 h-5 bg-blue-500 rounded-full mr-3 border-2 border-white"
+                style={{
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 2,
+                  elevation: 2,
+                }}
+              />
+              <Text className="text-sm font-semibold text-blue-700">
+                Due: ₹{dueAmount.toLocaleString("en-IN")} ({duePercentage}%)
+              </Text>
+            </View>
+          )}
+
+          {/* Fine */}
+          {fineAmount > 0 && (
+            <View className="flex-row items-center justify-center">
+              <View
+                className="w-5 h-5 bg-red-500 rounded-full mr-3 border-2 border-white"
+                style={{
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 2,
+                  elevation: 2,
+                }}
+              />
+              <Text className="text-sm font-semibold text-red-700">
+                Fine: ₹{fineAmount.toLocaleString("en-IN")} ({finePercentage}%)
+              </Text>
+            </View>
+          )}
+
+          {/* Show total if multiple segments */}
+          {pieData.length > 1 && (
+            <View className="mt-3 pt-2 border-t border-gray-200">
+              <Text className="text-center text-sm font-bold text-gray-800">
+                Total Rent: ₹{totalBalance.toLocaleString("en-IN")}
+              </Text>
+            </View>
+          )}
         </View>
-      </View>
+      </Animated.View>
 
       {/* Recent Transactions */}
-      <View className="px-6 py-6">
+      <Animated.View
+        className="px-6 py-6"
+        style={{
+          opacity: transactionsAnim,
+          transform: [
+            {
+              translateY: transactionsAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [20, 0],
+              }),
+            },
+          ],
+        }}
+      >
         <Text className="text-lg font-semibold text-gray-800 mb-4">
           Recent Transactions
         </Text>
 
-        {latestTransactions.map((transaction, index) => (
-          <View
-            key={transaction.id}
-            className={`flex-row justify-between items-center py-4 ${
-              index !== latestTransactions.length - 1
-                ? "border-b border-gray-200"
-                : ""
-            }`}
-          >
-            <View className="flex-1">
-              <Text className="text-base font-medium text-gray-800">
-                {transaction.name}
-              </Text>
-              <Text className="text-sm text-gray-500 mt-1">
-                {formatDate(transaction.createdAt)}
-              </Text>
-            </View>
-            <View className="items-end">
-              <Text
-                className={`text-base font-semibold ${
-                  transaction.typeOfPayment === "online"
-                    ? "text-green-600"
-                    : "text-blue-600"
-                }`}
-              >
-                {formatAmount(transaction.amount)}
-              </Text>
-              <Text className="text-xs text-gray-500 mt-1 capitalize">
-                {transaction.typeOfPayment}
-              </Text>
-            </View>
+        {isLoadingTransactions ? (
+          <TransactionShimmer />
+        ) : latestTransactions.length === 0 ? (
+          <View className="py-12 items-center">
+            <Text className="text-gray-500 text-center">
+              No transactions yet
+            </Text>
+            <Text className="text-gray-400 text-sm text-center mt-2">
+              Add your first transaction to get started
+            </Text>
           </View>
-        ))}
-
-        {/* See More Button */}
-        <TouchableOpacity
-          className="bg-blue-600 rounded-lg py-3 mt-6 items-center"
-          onPress={() => {
-            // router.push("/(main)/transactions");
-            console.log("Navigate to all transactions");
-          }}
-        >
-          <Text className="text-white font-semibold text-base">
-            See All Transactions
-          </Text>
-        </TouchableOpacity>
-      </View>
+        ) : (
+          latestTransactions.map((transaction: any, index: number) => (
+            <View
+              key={transaction._id || transaction.id || index}
+              className={`flex-row justify-between items-center py-4 ${
+                index !== latestTransactions.length - 1
+                  ? "border-b border-gray-200"
+                  : ""
+              }`}
+            >
+              <View className="flex-1">
+                <Text className="text-base font-medium text-gray-800">
+                  {transaction.note || "Payment"}
+                </Text>
+                <Text className="text-sm text-gray-500 mt-1">
+                  {formatDate(transaction.created || transaction.createdAt)}
+                </Text>
+              </View>
+              <View className="items-end">
+                <Text
+                  className={`text-base font-semibold ${
+                    transaction.paymentType === "online"
+                      ? "text-green-600"
+                      : "text-blue-600"
+                  }`}
+                >
+                  ₹{transaction.amount?.toLocaleString("en-IN") || "0"}
+                </Text>
+                <Text className="text-xs text-gray-500 mt-1 capitalize">
+                  {transaction.paymentType || "cash"}
+                </Text>
+              </View>
+            </View>
+          ))
+        )}
+      </Animated.View>
 
       {/* Summary Card */}
       {/* <View className="mx-6 mb-8 bg-blue-50 rounded-lg p-5 border border-blue-200">

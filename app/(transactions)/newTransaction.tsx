@@ -3,10 +3,13 @@ import {
   newTransactionSchema,
   type NewTransactionProps,
 } from "@/schema/newTransactionSchema";
+import { useProfileStore } from "@/store/userProfile";
 import { zodResolver } from "@hookform/resolvers/zod";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import {
+  Calendar,
   CheckCircle,
   CurrencyInr,
   DeviceMobile,
@@ -20,6 +23,7 @@ import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   Animated,
+  Platform,
   Pressable,
   Text,
   TextInput,
@@ -31,6 +35,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const AddTransaction = () => {
   const [amountFocused, setAmountFocused] = useState(false);
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const { activeProfile } = useProfileStore();
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
   const { data, mutate, isSuccess, isPending } = useCreateTransaction();
 
@@ -43,10 +50,11 @@ const AddTransaction = () => {
   } = useForm<NewTransactionProps>({
     resolver: zodResolver(newTransactionSchema),
     defaultValues: {
-      profileId: "6734e9b1a4f9b27c8a9c5b72", // You'll get this from your store/params
+      profileId: activeProfile,
       amount: 0,
       paymentType: "cash",
       note: "",
+      created: new Date(),
     },
   });
 
@@ -340,6 +348,68 @@ const AddTransaction = () => {
             />
           </View>
 
+          <View className="mb-6">
+            <Text className="text-gray-700 font-bold mb-3 text-lg">
+              Transaction Date
+            </Text>
+            <Controller
+              control={control}
+              name="created"
+              render={({ field: { onChange, value } }) => (
+                <View>
+                  <TouchableOpacity
+                    onPress={() => setDatePickerVisibility(true)}
+                    className="bg-white rounded-2xl px-5 py-4 border-2 border-gray-200 shadow-lg"
+                    style={{ elevation: 4 }}
+                  >
+                    <View className="flex-row items-center">
+                      <View className="bg-purple-50 p-2 rounded-lg">
+                        <Calendar size={24} color="#8b5cf6" weight="duotone" />
+                      </View>
+                      <View className="flex-1 ml-4">
+                        <Text className="text-gray-800 text-base font-medium">
+                          {value
+                            ? value.toLocaleDateString("en-IN", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "Select Date"}
+                        </Text>
+                        <Text className="text-gray-400 text-sm mt-1">
+                          Choose transaction date
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                  {isDatePickerVisible && (
+                    <DateTimePicker
+                      value={value || new Date()}
+                      mode="date"
+                      display={Platform.OS === "ios" ? "spinner" : "default"}
+                      onChange={(event, selectedDate) => {
+                        setDatePickerVisibility(false);
+                        if (selectedDate) {
+                          setSelectedDate(selectedDate);
+                          onChange(selectedDate);
+                        }
+                      }}
+                      maximumDate={new Date()}
+                    />
+                  )}
+                  {errors.created && (
+                    <View className="flex-row items-center mt-2 ml-1">
+                      <Warning size={16} color="#ef4444" weight="fill" />
+                      <Text className="text-red-500 text-sm ml-1 font-medium">
+                        {errors.created.message}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            />
+          </View>
+
           <View className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-5 mb-6 border border-blue-100">
             <Text className="text-blue-900 font-bold text-base mb-3">
               Transaction Summary
@@ -363,6 +433,18 @@ const AddTransaction = () => {
                     {paymentType}
                   </Text>
                 </View>
+              </View>
+              <View className="flex-row justify-between items-center py-2">
+                <Text className="text-gray-600 text-sm">Date</Text>
+                <Text className="text-gray-900 font-semibold text-sm">
+                  {watch("created")
+                    ? watch("created").toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "Today"}
+                </Text>
               </View>
             </View>
           </View>

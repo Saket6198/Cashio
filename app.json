@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "sangam-restaurant",
-    "slug": "sangam-restaurant",
+    "name": "Cashio",
+    "slug": "Cashio",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "sangamrestaurant",
+    "icon": "./assets/images/Wallet1.png",
+    "scheme": "cashio",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/Wallet1.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -18,23 +18,29 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/Wallet1.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.forhonor.sangamrestaurant"
+      "package": "com.forhonor.cashio"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/Wallet1.png"
     },
     "plugins": [
       "expo-router"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "65e1a711-6798-4ec0-b844-37ca128697a9"
+      }
     }
   }
 }

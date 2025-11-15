@@ -8,6 +8,7 @@ export const newTransactionSchema = z.object({
     .string()
     .min(1, "Description is required")
     .max(60, "Description must be at most 60 characters"),
+  created: z.date().optional(),
 });
 
 export type NewTransactionProps = z.infer<typeof newTransactionSchema>;

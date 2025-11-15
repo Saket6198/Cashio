@@ -5,7 +5,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-const Index = () => {
+const index = () => {
   const router = useRouter();
   useEffect(() => {
     setTimeout(() => {
@@ -26,11 +26,11 @@ const Index = () => {
           style={{ fontSize: hp("4%") }}
           entering={FadeInDown.delay(300).duration(800).springify()}
         >
-          Cashio
+          Cash-Co
         </Animated.Text>
       </View>
     </SafeAreaProvider>
   );
 };
 
-export default Index;
+export default index;

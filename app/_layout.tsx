@@ -16,12 +16,10 @@ function RootLayoutNav() {
             paddingTop: insets.top,
           },
         }}
-        initialRouteName="Index"
+        initialRouteName="index"
       >
-        <Stack.Screen name="Index" />
+        <Stack.Screen name="index" />
         <Stack.Screen name="(main)" />
-        <Stack.Screen name="(profile)" />
-        <Stack.Screen name="(transactions)" />
       </Stack>
       <PortalHost />
     </>

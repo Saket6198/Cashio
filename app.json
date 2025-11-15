@@ -1,17 +1,17 @@
 {
   "expo": {
-    "name": "Cashio",
-    "slug": "Cashio",
+    "name": "Cash-Co",
+    "slug": "Cash-Co",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "cashio",
+    "scheme": "sangamrestaurant",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000000"
     },
     "ios": {
       "supportsTablet": true
@@ -23,7 +23,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.forhonor.cashio"
+      "package": "com.forhonor.cashco"
     },
     "web": {
       "bundler": "metro",
@@ -39,7 +39,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "65e1a711-6798-4ec0-b844-37ca128697a9"
+        "projectId": "98e02293-bddb-440f-b4eb-dee7e1e9ae36"
       }
     }
   }

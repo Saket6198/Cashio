@@ -1,4 +1,5 @@
 import { BASE_URL } from "@/constants";
+import { NewTransactionProps } from "@/schema/newTransactionSchema";
 import axios from "axios";
 
 interface FetchTransactionsParams {
@@ -51,6 +52,33 @@ export const deleteTransactionById = async (transactionId: string) => {
     return response?.data;
   } catch (err: any) {
     console.log("Error deleting transaction:", err);
+    throw err;
+  }
+};
+
+export const fetchTransactionById = async (transactionId: string) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/user/getTransaction/${transactionId}`
+    );
+    return response?.data;
+  } catch (err: any) {
+    console.log("Error fetching transaction:", err);
+    throw err;
+  }
+};
+
+export const updateTransactionById = async (
+  transactionId: string,
+  transactionData: NewTransactionProps
+) => {
+  try {
+    const url = `${BASE_URL}/user/updateTransaction/${transactionId}`;
+
+    const response = await axios.patch(url, transactionData);
+    return response?.data;
+  } catch (err: any) {
+    console.log("Error updating transaction:", err);
     throw err;
   }
 };

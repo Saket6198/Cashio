@@ -5,7 +5,9 @@ export const icon = {
   home: (props: any) => (
     <Entypo name="home" size={22} color={"#673ab7"} {...props} />
   ),
-  records: (props: any) => <Entypo name="wallet" size={24} color="black" />,
+  records: (props: any) => (
+    <Entypo name="wallet" size={22} color="#673ab7" {...props} />
+  ),
   settings: (props: any) => (
     <Feather name="settings" size={22} color={"#673ab7"} {...props} />
   ),

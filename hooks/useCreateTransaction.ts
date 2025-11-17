@@ -1,5 +1,8 @@
 import { NewTransactionProps } from "@/schema/newTransactionSchema";
-import { createTransaction } from "@/services/transactionService";
+import {
+  createTransaction,
+  deleteTransactionById,
+} from "@/services/transactionService";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { Alert } from "react-native";
@@ -11,7 +14,7 @@ export const useCreateTransaction = () => {
       createTransaction(transactionData);
     },
     onSuccess: (data) => {
-      console.log("Transaction created successfully:"); 
+      console.log("Transaction created successfully:");
       Alert.alert("Success!", `Transaction recorded successfully`, [
         {
           text: "OK",
@@ -22,6 +25,14 @@ export const useCreateTransaction = () => {
     onError: (error) => {
       console.error("Error creating transaction:", error);
       Alert.alert("Error", "There was an error recording the transaction.");
+    },
+  });
+};
+
+export const useDeleteTransaction = () => {
+  return useMutation({
+    mutationFn: async (transactionId: string) => {
+      return deleteTransactionById(transactionId);
     },
   });
 };

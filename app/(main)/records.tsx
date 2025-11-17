@@ -1,8 +1,14 @@
+import { useDeleteTransaction } from "@/hooks/useCreateTransaction";
 import { useFetchTransactions } from "@/hooks/useFetchTransactions";
 import { useProfileStore } from "@/store/userProfile";
-import { CaretLeftIcon, CaretRightIcon } from "phosphor-react-native";
+import {
+  CaretLeftIcon,
+  CaretRightIcon,
+  TrashIcon,
+} from "phosphor-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   RefreshControl,
   ScrollView,
@@ -100,7 +106,38 @@ const Records = () => {
       page: currentPage,
       limit,
     });
-
+  const {
+    mutate,
+    isPending: isDeleting,
+    isSuccess: isDeleted,
+  } = useDeleteTransaction();
+  const onDelete = (transactionId: string) => {
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this transaction?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            mutate(transactionId, {
+              onSuccess: () => {
+                Alert.alert("Success", "Transaction deleted successfully.");
+                refetch();
+              },
+              onError: () => {
+                Alert.alert("Error", "Failed to delete the transaction.");
+              },
+            });
+          },
+        },
+      ]
+    );
+  };
   const transactions = data?.transactions || [];
   const pagination = data?.pagination || {};
 
@@ -178,6 +215,13 @@ const Records = () => {
         <Text className="text-xs text-gray-500">
           {formatDate(transaction.created)}
         </Text>
+        <TouchableOpacity
+          onPress={() => onDelete(transaction?._id)}
+          className="bg-red-400 rounded-full p-[1px]"
+          disabled={isDeleting}
+        >
+          <TrashIcon size={24} color="white" />
+        </TouchableOpacity>
       </View>
     </View>
   );

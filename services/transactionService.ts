@@ -7,7 +7,6 @@ interface FetchTransactionsParams {
   limit?: number;
 }
 
-
 export const createTransaction = async (transactionData: any) => {
   try {
     const response = await axios.post(
@@ -22,17 +21,36 @@ export const createTransaction = async (transactionData: any) => {
   }
 };
 
-export const fetchAllTransactionsByProfile = async ({profileId, page=1, limit=10}: FetchTransactionsParams) => {
-  try{
-    const response = await axios.get(`${BASE_URL}/user/getAllTransactions/${profileId}`, {
-      params: {
-        page,
-        limit,
+export const fetchAllTransactionsByProfile = async ({
+  profileId,
+  page = 1,
+  limit = 10,
+}: FetchTransactionsParams) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/user/getAllTransactions/${profileId}`,
+      {
+        params: {
+          page,
+          limit,
+        },
       }
-    });
+    );
     return response?.data;
   } catch (err: any) {
     console.log("Error fetching transactions:", err);
     throw err;
   }
-}
+};
+
+export const deleteTransactionById = async (transactionId: string) => {
+  try {
+    const response = await axios.delete(
+      `${BASE_URL}/user/transaction/${transactionId}`
+    );
+    return response?.data;
+  } catch (err: any) {
+    console.log("Error deleting transaction:", err);
+    throw err;
+  }
+};

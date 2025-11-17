@@ -2,6 +2,7 @@ import TransactionShimmer from "@/components/TransactionShimmer";
 import { useFetchTransactions } from "@/hooks/useFetchTransactions";
 import { useBalanceStore } from "@/store/balanceStore";
 import { useProfileStore } from "@/store/userProfile";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { PlusIcon } from "phosphor-react-native";
 import React, { useEffect, useRef } from "react";
@@ -44,7 +45,17 @@ const Home = () => {
     if (activeProfile) {
       fetchBalance(activeProfile);
     }
-  }, [activeProfile, fetchBalance]);
+  }, [activeProfile, fetchBalance, router]);
+
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (activeProfile) {
+        fetchBalance(activeProfile);
+        refetchTransactions();
+      }
+    }, [activeProfile, fetchBalance, refetchTransactions])
+  );
 
   useEffect(() => {
     if (currentBalance) {
@@ -55,7 +66,7 @@ const Home = () => {
         useNativeDriver: true,
       }).start();
     }
-  }, [currentBalance]);
+  }, [currentBalance, router]);
 
   useEffect(() => {
     if (transactionsData?.transactions) {
@@ -67,7 +78,7 @@ const Home = () => {
         useNativeDriver: true,
       }).start();
     }
-  }, [transactionsData]);
+  }, [transactionsData, router]);
 
   const onRefresh = async () => {
     if (!activeProfile) return;

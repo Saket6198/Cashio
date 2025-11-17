@@ -2,6 +2,7 @@ import "@/global.css";
 import { PortalHost } from "@rn-primitives/portal";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -9,6 +10,7 @@ function RootLayoutNav() {
   const insets = useSafeAreaInsets();
   return (
     <>
+      <StatusBar style="auto" />
       <Stack
         screenOptions={{
           headerShown: false,

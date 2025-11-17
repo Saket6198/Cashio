@@ -1,6 +1,7 @@
 import { useDeleteTransaction } from "@/hooks/useCreateTransaction";
 import { useFetchTransactions } from "@/hooks/useFetchTransactions";
 import { useProfileStore } from "@/store/userProfile";
+import { useRouter } from "expo-router";
 import {
   CaretLeftIcon,
   CaretRightIcon,
@@ -97,6 +98,7 @@ const ShimmerLoader = () => {
 
 const Records = () => {
   const { activeProfile } = useProfileStore();
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 5;
 
@@ -172,7 +174,7 @@ const Records = () => {
   };
 
   const renderTransactionCard = (transaction: Transaction) => (
-    <View
+    <TouchableOpacity
       key={transaction._id}
       className="bg-white rounded-xl p-4 mb-3 border border-gray-200"
       style={{
@@ -182,6 +184,12 @@ const Records = () => {
         shadowOpacity: 0.05,
         shadowRadius: 2,
       }}
+      onPress={() => {
+        router.push(
+          `/(transactions)/updateTransaction?transactionId=${transaction._id}`
+        );
+      }}
+      activeOpacity={0.7}
     >
       <View className="flex-row justify-between items-start mb-3">
         <View className="flex-1 mr-3">
@@ -223,7 +231,7 @@ const Records = () => {
           <TrashIcon size={24} color="white" />
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   if (!activeProfile) {

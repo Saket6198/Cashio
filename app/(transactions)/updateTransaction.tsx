@@ -1,4 +1,7 @@
-import { useCreateTransaction } from "@/hooks/useCreateTransaction";
+import {
+  useFetchTransaction,
+  useUpdateTransaction,
+} from "@/hooks/useCreateTransaction";
 import {
   newTransactionSchema,
   type NewTransactionProps,
@@ -7,7 +10,7 @@ import { useProfileStore } from "@/store/userProfile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import {
   CalendarIcon,
   CheckCircleIcon,
@@ -17,11 +20,12 @@ import {
   NotePencilIcon,
   WalletIcon,
   WarningIcon,
-  XIcon,
+  X,
 } from "phosphor-react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
+  ActivityIndicator,
   Animated,
   Platform,
   Pressable,
@@ -33,19 +37,27 @@ import {
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const AddTransaction = () => {
+const UpdateTransaction = () => {
+  const { transactionId } = useLocalSearchParams<{ transactionId: string }>();
   const [amountFocused, setAmountFocused] = useState(false);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const { activeProfile } = useProfileStore();
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
-  const { data, mutate, isSuccess, isPending } = useCreateTransaction();
+
+  const {
+    data: transactionData,
+    isLoading: isFetchingTransaction,
+    error: fetchError,
+  } = useFetchTransaction(transactionId);
+  const { mutate, isSuccess, isPending } = useUpdateTransaction();
 
   const {
     control,
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<NewTransactionProps>({
     resolver: zodResolver(newTransactionSchema),
@@ -58,12 +70,33 @@ const AddTransaction = () => {
     },
   });
 
+  useEffect(() => {
+    if (transactionData?.transaction) {
+      const transaction = transactionData.transaction;
+      reset({
+        profileId: transaction.profileId,
+        amount: transaction.amount,
+        paymentType: transaction.paymentType,
+        note: transaction.note,
+        created: new Date(transaction.created),
+      });
+      setSelectedDate(new Date(transaction.created));
+    }
+  }, [transactionData, reset]);
+
   const paymentType = watch("paymentType");
   const amount = watch("amount");
 
-  const onSubmit = (transactionData: NewTransactionProps) => {
-    console.log("Transaction Data:", transactionData);
-    mutate(transactionData);
+  const onSubmit = (updatedTransactionData: NewTransactionProps) => {
+    if (!transactionId) {
+      console.error("No transaction ID provided!");
+      return;
+    }
+
+    mutate({
+      transactionId,
+      transactionData: updatedTransactionData,
+    });
   };
 
   const formatAmount = (value: number) => {
@@ -72,6 +105,40 @@ const AddTransaction = () => {
 
   // Quick amount buttons
   const quickAmounts = [500, 1000, 2000, 5000, 10000];
+
+  if (isFetchingTransaction) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50">
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#3b82f6" />
+          <Text className="text-gray-500 mt-4">Loading transaction...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (fetchError || !transactionData?.transaction) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50">
+        <View className="flex-1 justify-center items-center px-6">
+          <Text className="text-6xl mb-4">⚠️</Text>
+          <Text className="text-xl font-bold text-gray-800 mb-2 text-center">
+            Transaction Not Found
+          </Text>
+          <Text className="text-gray-600 text-center mb-6">
+            The transaction you're looking for doesn't exist or has been
+            deleted.
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="bg-blue-600 px-6 py-3 rounded-lg"
+          >
+            <Text className="text-white font-semibold">Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -83,7 +150,6 @@ const AddTransaction = () => {
         extraScrollHeight={20}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header with Gradient */}
         <LinearGradient
           colors={["#1e40af", "#3b82f6", "#60a5fa"]}
           start={{ x: 0, y: 0 }}
@@ -98,10 +164,10 @@ const AddTransaction = () => {
               </View>
               <View>
                 <Text className="text-white text-2xl font-bold">
-                  Add Transaction
+                  Update Transaction
                 </Text>
                 <Text className="text-blue-100 text-sm mt-1">
-                  Record a new payment
+                  Edit payment details
                 </Text>
               </View>
             </View>
@@ -109,7 +175,7 @@ const AddTransaction = () => {
               onPress={() => router.back()}
               className="bg-white/20 p-2 rounded-full active:bg-white/30"
             >
-              <XIcon size={24} color="#fff" weight="bold" />
+              <X size={24} color="#fff" weight="bold" />
             </TouchableOpacity>
           </View>
         </LinearGradient>
@@ -202,7 +268,7 @@ const AddTransaction = () => {
                           ? ["#10b981", "#059669"]
                           : ["#ffffff", "#f9fafb"]
                       }
-                      className={` p-5 border-2 ${
+                      className={`p-5 border-2 ${
                         value === "cash"
                           ? "border-green-500"
                           : "border-gray-200"
@@ -454,14 +520,26 @@ const AddTransaction = () => {
           </View>
 
           <TouchableOpacity
-            className="rounded-2xl py-5 shadow-xl active:shadow-lg bg-blue-400 flex-row justify-center items-center"
+            className="rounded-2xl py-5 shadow-xl active:shadow-lg bg-orange-500 flex-row justify-center items-center"
             onPress={handleSubmit(onSubmit)}
             activeOpacity={0.9}
+            disabled={isPending}
           >
-            <CheckCircleIcon size={28} color="#fff" weight="fill" />
-            <Text className="text-white font-bold text-xl ml-3">
-              Save Transaction
-            </Text>
+            {isPending ? (
+              <>
+                <ActivityIndicator size="small" color="#fff" />
+                <Text className="text-white font-bold text-xl ml-3">
+                  Updating...
+                </Text>
+              </>
+            ) : (
+              <>
+                <CheckCircleIcon size={28} color="#fff" weight="fill" />
+                <Text className="text-white font-bold text-xl ml-3">
+                  Update Transaction
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAwareScrollView>
@@ -469,4 +547,4 @@ const AddTransaction = () => {
   );
 };
 
-export default AddTransaction;
+export default UpdateTransaction;

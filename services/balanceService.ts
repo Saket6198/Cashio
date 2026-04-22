@@ -16,11 +16,20 @@ export interface BalanceSummary {
 
 interface ProfileData {
   rentAmount: number;
+  gstAmount: number;
+  vatAmount: number;
+  otherCharges: number;
   finePerDay: number;
   fineActive: boolean;
   fineStartDate?: string;
   fineEndDate?: string;
 }
+
+const getGrandTotal = (profile: ProfileData) =>
+  profile.rentAmount +
+  profile.gstAmount +
+  profile.vatAmount +
+  profile.otherCharges;
 
 const calculateFine = (
   profile: ProfileData,
@@ -101,11 +110,32 @@ export const calculateMonthlyBalance = async (
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
     const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-    // Fetch profile to get rent amount
+    // Fetch base profile and current period settings (if available).
+    // We always prefer the current period snapshot so dashboard numbers stay tied to current month/year.
     const profileResponse = await axios.get(
       `${BASE_URL}/user/profile/${profileId}`
     );
-    const profile: ProfileData = profileResponse.data.profile;
+    const baseProfile: ProfileData = profileResponse.data.profile;
+
+    let periodSettings: ProfileData | null = null;
+    try {
+      const periodSettingsResponse = await axios.get(
+        `${BASE_URL}/user/profile/settings-history/${profileId}/${now.getFullYear()}/${
+          now.getMonth() + 1
+        }`
+      );
+
+      periodSettings =
+        periodSettingsResponse?.data?.status && periodSettingsResponse?.data?.history
+          ? periodSettingsResponse.data.history
+          : null;
+    } catch (err) {
+      periodSettings = null;
+    }
+
+    const profileForCurrentPeriod = periodSettings ?? baseProfile;
+    const grandTotalRent = getGrandTotal(profileForCurrentPeriod);
+
 
     // Fetch all transactions for this profile this month
     const transactionsResponse = await axios.get(
@@ -131,19 +161,23 @@ export const calculateMonthlyBalance = async (
     }, 0);
 
     // Calculate remaining balance
-    const remaining = profile.rentAmount - totalPaid;
+    const remaining = grandTotalRent - totalPaid;
     const due = Math.max(0, remaining);
 
     // Calculate fine if overdue (assuming rent is due by 5th of each month)
     const rentDueDate = new Date(now.getFullYear(), now.getMonth(), 5);
     const daysOverdue = getDaysOverdue(rentDueDate);
     const hasUnpaidAmount = due > 0;
-    const fineAmount = calculateFine(profile, rentDueDate, hasUnpaidAmount);
+    const fineAmount = calculateFine(
+      profileForCurrentPeriod,
+      rentDueDate,
+      hasUnpaidAmount
+    );
     const totalDue = due + fineAmount;
 
     // Determine status
     let status: "paid" | "due" | "fine";
-    if (totalPaid >= profile.rentAmount) {
+    if (totalPaid >= grandTotalRent) {
       status = "paid";
     } else if (fineAmount > 0) {
       status = "fine";
@@ -152,7 +186,7 @@ export const calculateMonthlyBalance = async (
     }
 
     return {
-      rentAmount: profile.rentAmount,
+      rentAmount: grandTotalRent,
       totalPaid,
       remaining,
       due,
@@ -183,6 +217,7 @@ export const calculateBalanceForMonth = async (
       `${BASE_URL}/user/profile/${profileId}`
     );
     const profile = profileResponse.data.profile;
+    const grandTotalRent = getGrandTotal(profile);
 
     const transactionsResponse = await axios.get(
       `${BASE_URL}/user/getAllTransactions/${profileId}`,
@@ -200,7 +235,7 @@ export const calculateBalanceForMonth = async (
       (sum: number, txn: any) => sum + (txn.amount || 0),
       0
     );
-    const remaining = profile.rentAmount - totalPaid;
+    const remaining = grandTotalRent - totalPaid;
 
     const due = Math.max(0, remaining);
     const rentDueDate = new Date(year, month, 5);
@@ -210,7 +245,7 @@ export const calculateBalanceForMonth = async (
     const totalDue = due + fineAmount;
 
     let status: "paid" | "due" | "fine";
-    if (totalPaid >= profile.rentAmount) {
+    if (totalPaid >= grandTotalRent) {
       status = "paid";
     } else if (fineAmount > 0) {
       status = "fine";
@@ -219,7 +254,7 @@ export const calculateBalanceForMonth = async (
     }
 
     return {
-      rentAmount: profile.rentAmount,
+      rentAmount: grandTotalRent,
       totalPaid,
       remaining,
       due,

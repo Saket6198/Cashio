@@ -5,6 +5,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+
 const index = () => {
   const router = useRouter();
   useEffect(() => {

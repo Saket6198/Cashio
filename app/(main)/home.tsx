@@ -187,13 +187,6 @@ const Home = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Header */}
-      {/* <View className="bg-blue-600 px-6 py-8 pb-6">
-        <Text className="text-white text-2xl font-bold">Sangam Restaurant</Text>
-        <Text className="text-blue-100 text-sm mt-1">
-          Rental Payment Tracker
-        </Text>
-      </View> */}
 
       <Animated.View
         className="items-center py-8 bg-gray-50"
@@ -381,33 +374,6 @@ const Home = () => {
         )}
       </Animated.View>
 
-      {/* Summary Card */}
-      {/* <View className="mx-6 mb-8 bg-blue-50 rounded-lg p-5 border border-blue-200">
-        <Text className="text-sm font-semibold text-blue-900 mb-3">
-          Payment Summary
-        </Text>
-        <View className="flex-row justify-between mb-2">
-          <Text className="text-sm text-gray-700">Total Rent Amount</Text>
-          <Text className="text-sm font-semibold text-gray-900">
-            {formatAmount(totalBalance.toString())}
-          </Text>
-        </View>
-        <View className="flex-row justify-between mb-2">
-          <Text className="text-sm text-gray-700">Amount Paid</Text>
-          <Text className="text-sm font-semibold text-green-600">
-            {formatAmount(paidAmount.toString())}
-          </Text>
-        </View>
-        <View className="border-t border-blue-300 my-2" />
-        <View className="flex-row justify-between">
-          <Text className="text-sm font-semibold text-gray-700">
-            Balance Due
-          </Text>
-          <Text className="text-base font-bold text-red-600">
-            {formatAmount(remainingBalance.toString())}
-          </Text>
-        </View>
-      </View> */}
     </ScrollView>
   );
 };

@@ -47,6 +47,9 @@ const NewProfile = () => {
       name: "",
       entityType: "individual",
       rentAmount: 0,
+      gstAmount: 0,
+      vatAmount: 0,
+      otherCharges: 0,
       finePerDay: 0,
       fineActive: false,
       note: "",
@@ -227,6 +230,108 @@ const NewProfile = () => {
                         <Warning size={14} color="#ef4444" weight="fill" />
                         <Text className="text-red-500 text-xs ml-1">
                           {errors.rentAmount.message}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              />
+            </View>
+
+            {/* GST Amount */}
+            <View className="mb-6">
+              <Text className="text-gray-700 font-semibold mb-2 text-base">
+                GST Amount
+              </Text>
+              <Controller
+                control={control}
+                name="gstAmount"
+                render={({ field: { onChange, value } }) => (
+                  <View>
+                    <View className="flex-row items-center bg-white rounded-xl px-4 py-3 border border-gray-200 shadow-sm">
+                      <CurrencyInr size={20} color="#6b7280" weight="duotone" />
+                      <TextInput
+                        className="flex-1 ml-3 text-gray-800 text-base"
+                        placeholder="0"
+                        placeholderTextColor="#9ca3af"
+                        value={value?.toString()}
+                        onChangeText={(text) => onChange(Number(text) || 0)}
+                        keyboardType="numeric"
+                      />
+                    </View>
+                    {errors.gstAmount && (
+                      <View className="flex-row items-center mt-2">
+                        <Warning size={14} color="#ef4444" weight="fill" />
+                        <Text className="text-red-500 text-xs ml-1">
+                          {errors.gstAmount.message}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              />
+            </View>
+
+            {/* VAT Amount */}
+            <View className="mb-6">
+              <Text className="text-gray-700 font-semibold mb-2 text-base">
+                VAT Amount
+              </Text>
+              <Controller
+                control={control}
+                name="vatAmount"
+                render={({ field: { onChange, value } }) => (
+                  <View>
+                    <View className="flex-row items-center bg-white rounded-xl px-4 py-3 border border-gray-200 shadow-sm">
+                      <CurrencyInr size={20} color="#6b7280" weight="duotone" />
+                      <TextInput
+                        className="flex-1 ml-3 text-gray-800 text-base"
+                        placeholder="0"
+                        placeholderTextColor="#9ca3af"
+                        value={value?.toString()}
+                        onChangeText={(text) => onChange(Number(text) || 0)}
+                        keyboardType="numeric"
+                      />
+                    </View>
+                    {errors.vatAmount && (
+                      <View className="flex-row items-center mt-2">
+                        <Warning size={14} color="#ef4444" weight="fill" />
+                        <Text className="text-red-500 text-xs ml-1">
+                          {errors.vatAmount.message}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              />
+            </View>
+
+            {/* Other Charges */}
+            <View className="mb-6">
+              <Text className="text-gray-700 font-semibold mb-2 text-base">
+                Other Charges
+              </Text>
+              <Controller
+                control={control}
+                name="otherCharges"
+                render={({ field: { onChange, value } }) => (
+                  <View>
+                    <View className="flex-row items-center bg-white rounded-xl px-4 py-3 border border-gray-200 shadow-sm">
+                      <CurrencyInr size={20} color="#6b7280" weight="duotone" />
+                      <TextInput
+                        className="flex-1 ml-3 text-gray-800 text-base"
+                        placeholder="0"
+                        placeholderTextColor="#9ca3af"
+                        value={value?.toString()}
+                        onChangeText={(text) => onChange(Number(text) || 0)}
+                        keyboardType="numeric"
+                      />
+                    </View>
+                    {errors.otherCharges && (
+                      <View className="flex-row items-center mt-2">
+                        <Warning size={14} color="#ef4444" weight="fill" />
+                        <Text className="text-red-500 text-xs ml-1">
+                          {errors.otherCharges.message}
                         </Text>
                       </View>
                     )}

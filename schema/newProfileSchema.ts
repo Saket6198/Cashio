@@ -3,6 +3,12 @@ export const newProfileSchema = z.object({
   name: z.string().min(3, "Name is required").max(18, "Name is too long"),
   entityType: z.enum(["individual", "hotel"]),
   rentAmount: z.number().min(0, "Rent amount must be positive").default(0),
+  gstAmount: z.number().min(0, "GST amount must be positive").default(0),
+  vatAmount: z.number().min(0, "VAT amount must be positive").default(0),
+  otherCharges: z
+    .number()
+    .min(0, "Other charges amount must be positive")
+    .default(0),
   finePerDay: z
     .number()
     .min(0, "Fine per day must be positive")
@@ -14,4 +20,4 @@ export const newProfileSchema = z.object({
   note: z.string().optional().default(""),
 });
 
-export type NewProfileType = z.infer<typeof newProfileSchema>;
+export type NewProfileType = z.input<typeof newProfileSchema>;

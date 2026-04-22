@@ -5,12 +5,15 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { KeyboardProvider } from "react-native-keyboard-controller";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+
 
 function RootLayoutNav() {
   const insets = useSafeAreaInsets();
   return (
     <>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -32,7 +35,9 @@ export default function RootLayout() {
   const client = new QueryClient();
   return (
     <QueryClientProvider client={client}>
-      <RootLayoutNav />
+      <KeyboardProvider preload={false}>
+        <RootLayoutNav />
+      </KeyboardProvider>
     </QueryClientProvider>
   );
 }

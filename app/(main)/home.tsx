@@ -7,6 +7,7 @@ import { useRouter } from "expo-router";
 import { PlusIcon } from "phosphor-react-native";
 import React, { useEffect, useRef } from "react";
 import {
+  ActivityIndicator,
   Animated,
   RefreshControl,
   ScrollView,
@@ -17,7 +18,8 @@ import {
 import { PieChart } from "react-native-gifted-charts";
 
 const Home = () => {
-  const { activeProfile, profileName } = useProfileStore();
+  const { activeProfile, profileName, selectedMonth, selectedYear } =
+    useProfileStore();
   const {
     currentBalance,
     isLoading,
@@ -43,18 +45,42 @@ const Home = () => {
 
   React.useEffect(() => {
     if (activeProfile) {
-      fetchBalance(activeProfile);
+      fetchBalance(
+        activeProfile,
+        selectedMonth || undefined,
+        selectedYear || undefined,
+      );
     }
-  }, [activeProfile, fetchBalance, router]);
+  }, [activeProfile, fetchBalance, selectedMonth, selectedYear]);
 
   // Refresh data when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      if (activeProfile) {
-        fetchBalance(activeProfile);
-        refetchTransactions();
+      if (!activeProfile) return;
+
+      if (currentBalance) {
+        refreshBalance(
+          activeProfile,
+          selectedMonth || undefined,
+          selectedYear || undefined,
+        );
+      } else {
+        fetchBalance(
+          activeProfile,
+          selectedMonth || undefined,
+          selectedYear || undefined,
+        );
       }
-    }, [activeProfile, fetchBalance, refetchTransactions])
+      refetchTransactions();
+    }, [
+      activeProfile,
+      currentBalance,
+      fetchBalance,
+      refreshBalance,
+      refetchTransactions,
+      selectedMonth,
+      selectedYear,
+    ]),
   );
 
   useEffect(() => {
@@ -84,7 +110,14 @@ const Home = () => {
     if (!activeProfile) return;
     setRefreshing(true);
     try {
-      await Promise.all([refreshBalance(activeProfile), refetchTransactions()]);
+      await Promise.all([
+        refreshBalance(
+          activeProfile,
+          selectedMonth || undefined,
+          selectedYear || undefined,
+        ),
+        refetchTransactions(),
+      ]);
     } catch (error) {
       console.error("Error refreshing:", error);
     } finally {
@@ -98,10 +131,14 @@ const Home = () => {
   const fineAmount = currentBalance?.fineAmount || 0;
   const statusColor = getStatusColor();
 
-  const paidPercentage = ((paidAmount / totalBalance) * 100).toFixed(1);
-  const duePercentage = ((dueAmount / totalBalance) * 100).toFixed(1);
+  const paidPercentage =
+    totalBalance > 0 ? ((paidAmount / totalBalance) * 100).toFixed(1) : "0";
+  const duePercentage =
+    totalBalance > 0 ? ((dueAmount / totalBalance) * 100).toFixed(1) : "0";
   const finePercentage =
-    fineAmount > 0 ? ((fineAmount / totalBalance) * 100).toFixed(1) : "0";
+    fineAmount > 0 && totalBalance > 0
+      ? ((fineAmount / totalBalance) * 100).toFixed(1)
+      : "0";
 
   const pieData = [];
 
@@ -187,7 +224,6 @@ const Home = () => {
         </TouchableOpacity>
       </View>
 
-
       <Animated.View
         className="items-center py-8 bg-gray-50"
         style={{
@@ -205,107 +241,129 @@ const Home = () => {
         <Text className="text-xl font-semibold text-gray-800 mb-2">
           Rent Balance Overview
         </Text>
-        <Text className="text-sm text-gray-600 mb-6">
-          Total Rent: {formatAmount(totalBalance.toString())}
-        </Text>
+        {!isLoading && (
+          <Text className="text-sm text-gray-600 mb-6">
+            Total Rent: {formatAmount(totalBalance.toString())}
+          </Text>
+        )}
 
-        <PieChart
-          data={pieData}
-          donut
-          radius={120}
-          innerRadius={80}
-          centerLabelComponent={() => {
-            const totalOutstanding = dueAmount + fineAmount;
-            return (
-              <View className="items-center">
-                <Text
-                  className="text-2xl font-bold"
-                  style={{
-                    color:
-                      totalOutstanding > 0
-                        ? fineAmount > 0
-                          ? "#ef4444"
-                          : "#3b82f6"
-                        : "#10b981",
-                  }}
-                >
-                  ₹{totalOutstanding.toLocaleString("en-IN")}
+        {isLoading && !currentBalance ? (
+          <View className="items-center justify-center" style={{ height: 260 }}>
+            <ActivityIndicator size="large" color="#3b82f6" />
+            <Text className="text-sm text-gray-500 mt-3">
+              Loading balance...
+            </Text>
+          </View>
+        ) : (
+          <View>
+            <PieChart
+              data={pieData}
+              donut
+              radius={120}
+              innerRadius={80}
+              centerLabelComponent={() => {
+                const totalOutstanding = dueAmount + fineAmount;
+                return (
+                  <View className="items-center">
+                    <Text
+                      className="text-2xl font-bold"
+                      style={{
+                        color:
+                          totalOutstanding > 0
+                            ? fineAmount > 0
+                              ? "#ef4444"
+                              : "#3b82f6"
+                            : "#10b981",
+                      }}
+                    >
+                      ₹{totalOutstanding.toLocaleString("en-IN")}
+                    </Text>
+                    <Text className="text-xs text-gray-600 mt-1 text-center">
+                      {totalOutstanding > 0 ? "Outstanding" : "Paid"}
+                    </Text>
+                    {fineAmount > 0 && (
+                      <Text className="text-xs text-red-600 mt-1 text-center">
+                        Fine: ₹{fineAmount.toLocaleString("en-IN")}
+                      </Text>
+                    )}
+                  </View>
+                );
+              }}
+            />
+            {isLoading && currentBalance && (
+              <View className="items-center mb-4">
+                <Text className="text-xs text-gray-500">
+                  Updating balance...
                 </Text>
-                <Text className="text-xs text-gray-600 mt-1 text-center">
-                  {totalOutstanding > 0 ? "Outstanding" : "Paid"}
-                </Text>
-                {fineAmount > 0 && (
-                  <Text className="text-xs text-red-600 mt-1 text-center">
-                    Fine: ₹{fineAmount.toLocaleString("en-IN")}
-                  </Text>
-                )}
               </View>
-            );
-          }}
-        />
-        <View className="mt-6 space-y-2">
-          {paidAmount > 0 && (
-            <View className="flex-row items-center justify-center">
-              <View
-                className="w-5 h-5 bg-green-500 rounded-full mr-3 border-2 border-white"
-                style={{
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 2,
-                  elevation: 2,
-                }}
-              />
-              <Text className="text-sm font-semibold text-green-700">
-                Paid: ₹{paidAmount.toLocaleString("en-IN")} ({paidPercentage}%)
-              </Text>
-            </View>
-          )}
+            )}
+            <View className="mt-6 space-y-2">
+              {paidAmount > 0 && (
+                <View className="flex-row items-center justify-center">
+                  <View
+                    className="w-5 h-5 bg-green-500 rounded-full mr-3 border-2 border-white"
+                    style={{
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 2,
+                      elevation: 2,
+                    }}
+                  />
+                  <Text className="text-sm font-semibold text-green-700">
+                    Paid: ₹{paidAmount.toLocaleString("en-IN")} (
+                    {paidPercentage}%)
+                  </Text>
+                </View>
+              )}
 
-          {dueAmount > 0 && (
-            <View className="flex-row items-center justify-center">
-              <View
-                className="w-5 h-5 bg-blue-500 rounded-full mr-3 border-2 border-white"
-                style={{
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 2,
-                  elevation: 2,
-                }}
-              />
-              <Text className="text-sm font-semibold text-blue-700">
-                Due: ₹{dueAmount.toLocaleString("en-IN")} ({duePercentage}%)
-              </Text>
-            </View>
-          )}
+              {dueAmount > 0 && (
+                <View className="flex-row items-center justify-center">
+                  <View
+                    className="w-5 h-5 bg-blue-500 rounded-full mr-3 border-2 border-white"
+                    style={{
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 2,
+                      elevation: 2,
+                    }}
+                  />
+                  <Text className="text-sm font-semibold text-blue-700">
+                    Due: ₹{dueAmount.toLocaleString("en-IN")} ({duePercentage}%)
+                  </Text>
+                </View>
+              )}
 
-          {fineAmount > 0 && (
-            <View className="flex-row items-center justify-center">
-              <View
-                className="w-5 h-5 bg-red-500 rounded-full mr-3 border-2 border-white"
-                style={{
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 2,
-                  elevation: 2,
-                }}
-              />
-              <Text className="text-sm font-semibold text-red-700">
-                Fine: ₹{fineAmount.toLocaleString("en-IN")} ({finePercentage}%)
-              </Text>
-            </View>
-          )}
+              {fineAmount > 0 && (
+                <View className="flex-row items-center justify-center">
+                  <View
+                    className="w-5 h-5 bg-red-500 rounded-full mr-3 border-2 border-white"
+                    style={{
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 2,
+                      elevation: 2,
+                    }}
+                  />
+                  <Text className="text-sm font-semibold text-red-700">
+                    Fine: ₹{fineAmount.toLocaleString("en-IN")} (
+                    {finePercentage}%)
+                  </Text>
+                </View>
+              )}
 
-          {pieData.length > 1 && (
-            <View className="mt-3 pt-2 border-t border-gray-200">
-              <Text className="text-center text-sm font-bold text-gray-800">
-                Total Rent: ₹{totalBalance.toLocaleString("en-IN")}
-              </Text>
+              {pieData.length > 1 && (
+                <View className="mt-3 pt-2 border-t border-gray-200">
+                  <Text className="text-center text-sm font-bold text-gray-800">
+                    Total Rent: ₹{totalBalance.toLocaleString("en-IN")}
+                  </Text>
+                </View>
+              )}
             </View>
-          )}
-        </View>
+          </View>
+        )}
       </Animated.View>
 
       <Animated.View
@@ -373,7 +431,6 @@ const Home = () => {
           ))
         )}
       </Animated.View>
-
     </ScrollView>
   );
 };

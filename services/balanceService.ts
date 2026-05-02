@@ -7,7 +7,7 @@ export interface BalanceSummary {
   remaining: number;
   due: number;
   fineAmount: number;
-  totalDue: number; // due + fine
+  totalDue: number;
   month: string;
   year: number;
   status: "paid" | "due" | "fine";
@@ -25,6 +25,17 @@ interface ProfileData {
   fineEndDate?: string;
 }
 
+const getEmptyPeriodSettings = (): ProfileData => ({
+  rentAmount: 0,
+  gstAmount: 0,
+  vatAmount: 0,
+  otherCharges: 0,
+  finePerDay: 0,
+  fineActive: false,
+  fineStartDate: undefined,
+  fineEndDate: undefined,
+});
+
 const getGrandTotal = (profile: ProfileData) =>
   profile.rentAmount +
   profile.gstAmount +
@@ -34,9 +45,8 @@ const getGrandTotal = (profile: ProfileData) =>
 const calculateFine = (
   profile: ProfileData,
   rentDueDate: Date,
-  hasUnpaidAmount: boolean
+  hasUnpaidAmount: boolean,
 ): number => {
-  // Only calculate fine if there's actually unpaid rent and fine is active
   if (!profile.fineActive || !hasUnpaidAmount || !profile.finePerDay) return 0;
 
   const fineStartDate = profile.fineStartDate
@@ -46,197 +56,98 @@ const calculateFine = (
     ? new Date(profile.fineEndDate)
     : null;
 
-  // Fine period must be defined
   if (!fineStartDate || !fineEndDate) return 0;
 
   const now = new Date();
   const nowMidnight = new Date(
     now.getFullYear(),
     now.getMonth(),
-    now.getDate()
+    now.getDate(),
   );
   const startMidnight = new Date(
     fineStartDate.getFullYear(),
     fineStartDate.getMonth(),
-    fineStartDate.getDate()
+    fineStartDate.getDate(),
   );
   const endMidnight = new Date(
     fineEndDate.getFullYear(),
     fineEndDate.getMonth(),
-    fineEndDate.getDate()
+    fineEndDate.getDate(),
   );
 
-  // Check if current date is before fine period starts
   if (nowMidnight < startMidnight) return 0;
 
-  // Determine the effective end date (either fineEndDate or today, whichever is earlier)
   const effectiveEndDate =
     nowMidnight < endMidnight ? nowMidnight : endMidnight;
-
-  // Calculate days between start and effective end (inclusive)
   const diffTime = effectiveEndDate.getTime() - startMidnight.getTime();
-  const daysDiff = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include the start day
-
-  // Calculate total fine
+  const daysDiff = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
   const fineDays = Math.max(0, daysDiff);
   return fineDays * profile.finePerDay;
 };
 
 const getDaysOverdue = (dueDate: Date): number => {
   const now = new Date();
-  // Set both dates to midnight for accurate day calculation
   const dueDateMidnight = new Date(
     dueDate.getFullYear(),
     dueDate.getMonth(),
-    dueDate.getDate()
+    dueDate.getDate(),
   );
   const nowMidnight = new Date(
     now.getFullYear(),
     now.getMonth(),
-    now.getDate()
+    now.getDate(),
   );
-
   const diffTime = nowMidnight.getTime() - dueDateMidnight.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   return Math.max(0, diffDays);
 };
 
-export const calculateMonthlyBalance = async (
-  profileId: string
+export const calculateBalanceForMonth = async (
+  profileId: string,
+  month: number, // 0-indexed (JS month)
+  year: number,
 ): Promise<BalanceSummary> => {
   try {
-    // Get current month range
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    // month+1 because backend expects 1-indexed month
+    const oneIndexedMonth = month + 1;
 
-    // Fetch base profile and current period settings (if available).
-    // We always prefer the current period snapshot so dashboard numbers stay tied to current month/year.
-    const profileResponse = await axios.get(
-      `${BASE_URL}/user/profile/${profileId}`
-    );
-    const baseProfile: ProfileData = profileResponse.data.profile;
-
+    // Fetch period settings for this specific month/year
     let periodSettings: ProfileData | null = null;
     try {
       const periodSettingsResponse = await axios.get(
-        `${BASE_URL}/user/profile/settings-history/${profileId}/${now.getFullYear()}/${
-          now.getMonth() + 1
-        }`
+        `${BASE_URL}/user/profile/settings-history/${profileId}/${year}/${oneIndexedMonth}`,
       );
-
-      periodSettings =
-        periodSettingsResponse?.data?.status && periodSettingsResponse?.data?.history
-          ? periodSettingsResponse.data.history
-          : null;
+      periodSettings = periodSettingsResponse?.data?.history || null;
     } catch (err) {
       periodSettings = null;
     }
 
-    const profileForCurrentPeriod = periodSettings ?? baseProfile;
-    const grandTotalRent = getGrandTotal(profileForCurrentPeriod);
-
-
-    // Fetch all transactions for this profile this month
-    const transactionsResponse = await axios.get(
-      `${BASE_URL}/user/getAllTransactions/${profileId}`,
-      {
-        params: {
-          startDate: start.toISOString(),
-          endDate: end.toISOString(),
-          limit: 100,
-        },
-      }
-    );
-
-    const transactions = transactionsResponse.data.transactions || [];
-
-    // Calculate total paid this month
-    const totalPaid = transactions.reduce((sum: number, txn: any) => {
-      const txnDate = new Date(txn.createdAt || txn.created);
-      if (txnDate >= start && txnDate < end) {
-        return sum + (txn.amount || 0);
-      }
-      return sum;
-    }, 0);
-
-    // Calculate remaining balance
-    const remaining = grandTotalRent - totalPaid;
-    const due = Math.max(0, remaining);
-
-    // Calculate fine if overdue (assuming rent is due by 5th of each month)
-    const rentDueDate = new Date(now.getFullYear(), now.getMonth(), 5);
-    const daysOverdue = getDaysOverdue(rentDueDate);
-    const hasUnpaidAmount = due > 0;
-    const fineAmount = calculateFine(
-      profileForCurrentPeriod,
-      rentDueDate,
-      hasUnpaidAmount
-    );
-    const totalDue = due + fineAmount;
-
-    // Determine status
-    let status: "paid" | "due" | "fine";
-    if (totalPaid >= grandTotalRent) {
-      status = "paid";
-    } else if (fineAmount > 0) {
-      status = "fine";
-    } else {
-      status = "due";
-    }
-
-    return {
-      rentAmount: grandTotalRent,
-      totalPaid,
-      remaining,
-      due,
-      fineAmount,
-      totalDue,
-      daysOverdue,
-      status,
-      month: now.toLocaleDateString("en-US", { month: "long" }),
-      year: now.getFullYear(),
-    };
-  } catch (error) {
-    console.error("Error calculating monthly balance:", error);
-    throw error;
-  }
-};
-
-// Get balance for a specific month/year
-export const calculateBalanceForMonth = async (
-  profileId: string,
-  month: number,
-  year: number
-): Promise<BalanceSummary> => {
-  try {
-    const start = new Date(year, month, 1);
-    const end = new Date(year, month + 1, 1);
-
-    const profileResponse = await axios.get(
-      `${BASE_URL}/user/profile/${profileId}`
-    );
-    const profile = profileResponse.data.profile;
+    const profile = periodSettings || getEmptyPeriodSettings();
     const grandTotalRent = getGrandTotal(profile);
 
+    // ✅ Filter transactions by created date for the selected billing month
+    // Uses createdAt date range so a March query only includes payments created in March.
+    const startDate = new Date(year, month, 1).toISOString();
+    const endDate = new Date(year, month + 1, 1).toISOString();
+
     const transactionsResponse = await axios.get(
       `${BASE_URL}/user/getAllTransactions/${profileId}`,
       {
         params: {
-          startDate: start.toISOString(),
-          endDate: end.toISOString(),
+          startDate,
+          endDate,
           limit: 1000,
         },
-      }
+      },
     );
 
     const transactions = transactionsResponse.data.transactions || [];
     const totalPaid = transactions.reduce(
       (sum: number, txn: any) => sum + (txn.amount || 0),
-      0
+      0,
     );
-    const remaining = grandTotalRent - totalPaid;
 
+    const remaining = grandTotalRent - totalPaid;
     const due = Math.max(0, remaining);
     const rentDueDate = new Date(year, month, 5);
     const daysOverdue = getDaysOverdue(rentDueDate);
@@ -245,7 +156,7 @@ export const calculateBalanceForMonth = async (
     const totalDue = due + fineAmount;
 
     let status: "paid" | "due" | "fine";
-    if (totalPaid >= grandTotalRent) {
+    if (totalPaid >= grandTotalRent && grandTotalRent > 0) {
       status = "paid";
     } else if (fineAmount > 0) {
       status = "fine";

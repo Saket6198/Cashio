@@ -26,12 +26,15 @@ const ProfileSwitcher = () => {
   const { data, isPending, isSuccess, refetch, isFetching, isRefetching } =
     useFetchProfiles();
   const router = useRouter();
-  const { setActiveProfile, setProfileName } = useProfileStore();
+  const { setActiveProfile, setProfileName, setSelectedPeriod } =
+    useProfileStore();
 
   const handleProfilePress = (profile: Profile) => {
     console.log("Selected profile:", profile._id);
+    const now = new Date();
     setActiveProfile(profile._id);
     setProfileName(profile.name);
+    setSelectedPeriod(now.getMonth() + 1, now.getFullYear());
     router.replace("/(main)/home");
   };
 

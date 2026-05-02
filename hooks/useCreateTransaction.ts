@@ -45,9 +45,13 @@ export const useCreateTransaction = () => {
 };
 
 export const useDeleteTransaction = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (transactionId: string) => {
       return deleteTransactionById(transactionId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
   });
 };

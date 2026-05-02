@@ -12,10 +12,11 @@ export const useFetchTransactions = ({
   page = 1,
   limit = 10,
 }: UseTransactionsParams) => {
-  return useQuery({
+  return useQuery<{ transactions: any[]; pagination: any }, Error>({
     queryKey: ["transactions", profileId, page, limit],
     queryFn: () => fetchAllTransactionsByProfile({ profileId, page, limit }),
     enabled: !!profileId,
-    staleTime: 1000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 };

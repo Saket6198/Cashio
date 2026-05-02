@@ -6,7 +6,7 @@ const HomeLayout = () => {
   return (
     <Tabs
       tabBar={(props) => <TabBar {...props} />}
-      screenOptions={{ headerShown: false, animation: "fade" }}
+      screenOptions={{ headerShown: false, animation: "none" }}
       initialRouteName="home"
     >
       <Tabs.Screen options={{ title: "Home" }} name="home" />

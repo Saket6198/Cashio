@@ -1,6 +1,6 @@
 import {
   BalanceSummary,
-  calculateMonthlyBalance,
+  calculateBalanceForMonth,
 } from "@/services/balanceService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
@@ -13,8 +13,16 @@ interface BalanceStore {
   error: string | null;
 
   // Actions
-  fetchBalance: (profileId: string) => Promise<void>;
-  refreshBalance: (profileId: string) => Promise<void>;
+  fetchBalance: (
+    profileId: string,
+    month?: number,
+    year?: number,
+  ) => Promise<void>;
+  refreshBalance: (
+    profileId: string,
+    month?: number,
+    year?: number,
+  ) => Promise<void>;
   clearBalance: () => void;
 
   // Computed values
@@ -30,13 +38,26 @@ export const useBalanceStore = create<BalanceStore>()(
       isLoading: false,
       error: null,
 
-      fetchBalance: async (profileId: string) => {
+      fetchBalance: async (
+        profileId: string,
+        month?: number,
+        year?: number,
+      ) => {
         if (!profileId) return;
+
+        const now = new Date();
+        const targetMonth =
+          typeof month === "number" ? month - 1 : now.getMonth();
+        const targetYear = typeof year === "number" ? year : now.getFullYear();
 
         set({ isLoading: true, error: null });
 
         try {
-          const balance = await calculateMonthlyBalance(profileId);
+          const balance = await calculateBalanceForMonth(
+            profileId,
+            targetMonth,
+            targetYear,
+          );
           set({
             currentBalance: balance,
             isLoading: false,
@@ -49,10 +70,23 @@ export const useBalanceStore = create<BalanceStore>()(
         }
       },
 
-      refreshBalance: async (profileId: string) => {
+      refreshBalance: async (
+        profileId: string,
+        month?: number,
+        year?: number,
+      ) => {
         // Force refresh without showing loading state
         try {
-          const balance = await calculateMonthlyBalance(profileId);
+          const now = new Date();
+          const targetMonth =
+            typeof month === "number" ? month - 1 : now.getMonth();
+          const targetYear =
+            typeof year === "number" ? year : now.getFullYear();
+          const balance = await calculateBalanceForMonth(
+            profileId,
+            targetMonth,
+            targetYear,
+          );
           set({ currentBalance: balance });
         } catch (error: any) {
           console.error("Error refreshing balance:", error);
@@ -106,6 +140,6 @@ export const useBalanceStore = create<BalanceStore>()(
       partialize: (state) => ({
         currentBalance: state.currentBalance,
       }),
-    }
-  )
+    },
+  ),
 );

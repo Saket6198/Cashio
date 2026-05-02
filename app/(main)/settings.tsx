@@ -13,12 +13,14 @@ import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
+import { MONTHS } from "@/constants/dates";
+import { formatDate } from "@/utils/dateHelper";
 import {
   ActivityIndicator,
   Alert,
   Modal,
-  Pressable,
   Platform,
+  Pressable,
   ScrollView,
   Switch,
   Text,
@@ -30,8 +32,6 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { MONTHS } from "@/constants/dates";
-import { formatDate } from "@/utils/dateHelper";
 
 const Settings = () => {
   const now = new Date();
@@ -50,14 +50,20 @@ const Settings = () => {
   const isCurrentPeriod =
     viewMonth === currentMonth && viewYear === currentYear;
 
-  const { activeProfile, setProfileName } = useProfileStore();
+  const { activeProfile, setProfileName, setSelectedPeriod } =
+    useProfileStore();
   const profileId = activeProfile || "";
-  const { data, isPending, isSuccess } = useFetchProfileById(profileId);
+  const {
+    data,
+    isFetching: isProfileLoading,
+    isSuccess,
+  } = useFetchProfileById(profileId);
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
 
   const {
     data: periodSettings,
-    isPending: isPeriodLoading,
+    isLoading: isPeriodLoading,
+    isFetching: isPeriodFetching,
     isFetched: isPeriodFetched,
   } = useFetchProfileSettingsByMonthYear(profileId, viewYear, viewMonth);
 
@@ -119,55 +125,45 @@ const Settings = () => {
     );
   };
 
+  const clearChargeFields = () => {
+    setValue("rentAmount", 0);
+    setValue("gstAmount", 0);
+    setValue("vatAmount", 0);
+    setValue("otherCharges", 0);
+    setValue("note", "");
+    setValue("fineActive", false);
+    setValue("finePerDay", 0);
+    setValue("fineStartDate", undefined);
+    setValue("fineEndDate", undefined);
+  };
+
   // Load base profile identity fields on mount/update
   useEffect(() => {
     if (isSuccess && data) {
       applyBaseProfileFields(data);
     }
-  }, [isSuccess, data, setValue, setProfileName]);
+  }, [isSuccess, data]);
 
   // Load period-specific data whenever month/year changes
   useEffect(() => {
     setValue("month", viewMonth);
     setValue("year", viewYear);
 
+    // Sync selected period to store so Home tab pie chart updates
+    setSelectedPeriod(viewMonth, viewYear);
+
     if (isPeriodLoading) return;
-
-    if (periodSettings) {
-      applyChargeFields(periodSettings);
-      return;
-    }
-
-    // For current month/year only, fallback to base profile if history missing.
-    if (isCurrentPeriod && data) {
-      applyChargeFields(data);
-      return;
-    }
-
     if (!isPeriodFetched) return;
 
-    if (!periodSettings) {
-      setValue("rentAmount", 0);
-      setValue("gstAmount", 0);
-      setValue("vatAmount", 0);
-      setValue("otherCharges", 0);
-      setValue("note", "");
-      setValue("fineActive", false);
-      setValue("finePerDay", 0);
-      setValue("fineStartDate", undefined);
-      setValue("fineEndDate", undefined);
-      return;
+    if (periodSettings) {
+      // Data exists for this period — populate from it
+      applyChargeFields(periodSettings);
+    } else {
+      // No data for this period (new month or past month with no record) — always zero out
+      clearChargeFields();
     }
-  }, [
-    periodSettings,
-    viewMonth,
-    viewYear,
-    setValue,
-    isPeriodLoading,
-    isCurrentPeriod,
-    data,
-    isPeriodFetched,
-  ]);
+  }, [periodSettings, viewMonth, viewYear, isPeriodLoading, isPeriodFetched]);
+
   const watchFineActive = watch("fineActive");
   const watchFineStartDate = watch("fineStartDate");
   const watchFineEndDate = watch("fineEndDate");
@@ -283,7 +279,6 @@ const Settings = () => {
               </Text>
             </TouchableOpacity>
 
-            {/* "Current" badge or "Past record" label */}
             {isCurrentPeriod ? (
               <View className="bg-green-100 px-2 py-1 rounded-full">
                 <Text className="text-green-700 text-xs font-semibold">
@@ -308,7 +303,7 @@ const Settings = () => {
             showsVerticalScrollIndicator={false}
             bottomOffset={20}
           >
-            {isPending ? (
+            {isUpdating ? (
               <View className="flex-1 items-center justify-center py-20">
                 <ActivityIndicator size="large" color="#3b82f6" />
                 <Text className="text-gray-500 mt-4">
@@ -724,7 +719,7 @@ const Settings = () => {
             )}
           </KeyboardAwareScrollView>
 
-          {isPeriodLoading && !isPending ? (
+          {isPeriodLoading && !isUpdating ? (
             <View className="absolute inset-0 bg-gray-50/70 items-center justify-center">
               <ActivityIndicator size="large" color="#3b82f6" />
               <Text className="text-gray-600 mt-3 font-medium">
@@ -827,7 +822,6 @@ const Settings = () => {
                     }`}
                     onPress={() => {
                       setViewYear(year);
-                      // If switching to current year and selected month is now invalid, reset to current month
                       if (year === currentYear && viewMonth > currentMonth) {
                         setViewMonth(currentMonth);
                       }

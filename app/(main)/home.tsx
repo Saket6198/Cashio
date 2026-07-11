@@ -126,6 +126,7 @@ const Home = () => {
   };
 
   const totalBalance = currentBalance?.rentAmount || 0;
+  const previousMonthBalance = currentBalance?.previous_month_balance || 0;
   const paidAmount = currentBalance?.totalPaid || 0;
   const dueAmount = currentBalance?.due || 0;
   const fineAmount = currentBalance?.fineAmount || 0;

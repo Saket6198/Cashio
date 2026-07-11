@@ -8,6 +8,7 @@ export type ProfileSettingsHistoryItem = {
   month: number;
   monthLabel: string;
   rentAmount: number;
+  previous_month_balance: number;
   gstAmount: number;
   vatAmount: number;
   otherCharges: number;

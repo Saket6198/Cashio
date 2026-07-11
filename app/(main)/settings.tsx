@@ -32,6 +32,7 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { ProfileSettingsHistoryItem } from "@/services/profileServices";
 
 const Settings = () => {
   const now = new Date();
@@ -81,6 +82,7 @@ const Settings = () => {
       month: currentMonth,
       year: currentYear,
       rentAmount: 0,
+      previous_month_balance: 0,
       gstAmount: 0,
       vatAmount: 0,
       otherCharges: 0,
@@ -96,10 +98,12 @@ const Settings = () => {
 
   const calculateGrandTotal = (
     rentAmount: number,
+    previous_month_balance: number,
     gstAmount: number,
     vatAmount: number,
     otherCharges: number,
-  ) => rentAmount + gstAmount + vatAmount + otherCharges;
+  ) =>
+    rentAmount + previous_month_balance + gstAmount + vatAmount + otherCharges;
 
   const applyBaseProfileFields = (source: any) => {
     setValue("name", source?.name || "");
@@ -107,8 +111,9 @@ const Settings = () => {
     setProfileName(source?.name || "");
   };
 
-  const applyChargeFields = (source: any) => {
+  const applyChargeFields = (source: ProfileSettingsHistoryItem) => {
     setValue("rentAmount", source?.rentAmount || 0);
+    setValue("previous_month_balance", source?.previous_month_balance);
     setValue("gstAmount", source?.gstAmount || 0);
     setValue("vatAmount", source?.vatAmount || 0);
     setValue("otherCharges", source?.otherCharges || 0);
@@ -127,6 +132,7 @@ const Settings = () => {
 
   const clearChargeFields = () => {
     setValue("rentAmount", 0);
+    setValue("previous_month_balance", 0);
     setValue("gstAmount", 0);
     setValue("vatAmount", 0);
     setValue("otherCharges", 0);
@@ -168,11 +174,13 @@ const Settings = () => {
   const watchFineStartDate = watch("fineStartDate");
   const watchFineEndDate = watch("fineEndDate");
   const watchRent = watch("rentAmount") || 0;
+  const watchPreviousMonthBalance = watch("previous_month_balance") || 0;
   const watchGst = watch("gstAmount") || 0;
   const watchVat = watch("vatAmount") || 0;
   const watchOther = watch("otherCharges") || 0;
   const grandTotal = calculateGrandTotal(
     watchRent,
+    watchPreviousMonthBalance,
     watchGst,
     watchVat,
     watchOther,
@@ -398,7 +406,7 @@ const Settings = () => {
 
                   <View className="mb-3">
                     <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                      Rent Amount
+                      Current Rent Amount
                     </Text>
                     <Controller
                       control={control}
@@ -428,6 +436,44 @@ const Settings = () => {
                     {errors.rentAmount && (
                       <Text className="text-red-500 text-xs mt-1">
                         {errors.rentAmount.message}
+                      </Text>
+                    )}
+                  </View>
+
+                  <View className="mb-3">
+                    <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                      Previous Month Balance
+                    </Text>
+                    <Controller
+                      control={control}
+                      name="previous_month_balance"
+                      render={({ field: { onChange, onBlur, value } }) => (
+                        <TextInput
+                          className={`border rounded-xl px-4 py-3 text-sm font-medium ${
+                            focusedField === "previous_month_balance"
+                              ? "border-blue-500 bg-blue-50 text-blue-900"
+                              : "border-gray-200 bg-gray-50 text-gray-800"
+                          }`}
+                          placeholder="0"
+                          placeholderTextColor="#9ca3af"
+                          keyboardType="numeric"
+                          onBlur={() => {
+                            setFocusedField(null);
+                            onBlur();
+                          }}
+                          onFocus={() =>
+                            setFocusedField("previous_month_balance")
+                          }
+                          onChangeText={(text) =>
+                            onChange(parseFloat(text) || 0)
+                          }
+                          value={value?.toString()}
+                        />
+                      )}
+                    />
+                    {errors.previous_month_balance && (
+                      <Text className="text-red-500 text-xs mt-1">
+                        {errors.previous_month_balance.message}
                       </Text>
                     )}
                   </View>

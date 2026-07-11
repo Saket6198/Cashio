@@ -39,7 +39,7 @@ const AddTransaction = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const { activeProfile } = useProfileStore();
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
-  const { mutate, isSuccess, isPending } = useCreateTransaction();
+  const { mutateAsync, isSuccess, isPending } = useCreateTransaction();
 
   const {
     control,
@@ -63,7 +63,7 @@ const AddTransaction = () => {
 
   const onSubmit = (transactionData: NewTransactionProps) => {
     console.log("Transaction Data:", transactionData);
-    mutate(transactionData);
+    mutateAsync(transactionData);
   };
 
   const formatAmount = (value: number) => {

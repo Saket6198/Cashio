@@ -3,6 +3,9 @@ export const newProfileSchema = z.object({
   name: z.string().min(3, "Name is required").max(18, "Name is too long"),
   entityType: z.enum(["individual", "hotel"]),
   rentAmount: z.number().min(0, "Rent amount must be positive").default(0),
+  previous_month_balance: z
+    .number()
+    .min(0, "Previous Month Balance cannot be negative"),
   gstAmount: z.number().min(0, "GST amount must be positive").default(0),
   vatAmount: z.number().min(0, "VAT amount must be positive").default(0),
   otherCharges: z
@@ -15,8 +18,8 @@ export const newProfileSchema = z.object({
     .optional()
     .default(0),
   fineActive: z.boolean().default(false),
-  fineStartDate: z.date().optional().default(undefined),
-  fineEndDate: z.date().optional().default(undefined),
+  fineStartDate: z.date().optional(),
+  fineEndDate: z.date().optional(),
   note: z.string().optional().default(""),
 });
 

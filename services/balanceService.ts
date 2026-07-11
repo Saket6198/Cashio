@@ -3,6 +3,7 @@ import axios from "axios";
 
 export interface BalanceSummary {
   rentAmount: number;
+  previous_month_balance: number;
   totalPaid: number;
   remaining: number;
   due: number;
@@ -16,6 +17,7 @@ export interface BalanceSummary {
 
 interface ProfileData {
   rentAmount: number;
+  previous_month_balance: number;
   gstAmount: number;
   vatAmount: number;
   otherCharges: number;
@@ -27,6 +29,7 @@ interface ProfileData {
 
 const getEmptyPeriodSettings = (): ProfileData => ({
   rentAmount: 0,
+  previous_month_balance: 0,
   gstAmount: 0,
   vatAmount: 0,
   otherCharges: 0,
@@ -38,6 +41,7 @@ const getEmptyPeriodSettings = (): ProfileData => ({
 
 const getGrandTotal = (profile: ProfileData) =>
   profile.rentAmount +
+  profile.previous_month_balance +
   profile.gstAmount +
   profile.vatAmount +
   profile.otherCharges;
@@ -166,6 +170,7 @@ export const calculateBalanceForMonth = async (
 
     return {
       rentAmount: grandTotalRent,
+      previous_month_balance: profile.previous_month_balance,
       totalPaid,
       remaining,
       due,

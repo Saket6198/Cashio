@@ -47,6 +47,7 @@ const NewProfile = () => {
       name: "",
       entityType: "individual",
       rentAmount: 0,
+      previous_month_balance: 0,
       gstAmount: 0,
       vatAmount: 0,
       otherCharges: 0,
@@ -74,7 +75,7 @@ const NewProfile = () => {
       onError: (err: any) => {
         Alert.alert(
           "Error",
-          err?.response?.data?.message || "Failed to create profile"
+          err?.response?.data?.message || "Failed to create profile",
         );
       },
     });
@@ -230,6 +231,38 @@ const NewProfile = () => {
                         <Warning size={14} color="#ef4444" weight="fill" />
                         <Text className="text-red-500 text-xs ml-1">
                           {errors.rentAmount.message}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              />
+            </View>
+            <View className="mb-6">
+              <Text className="text-gray-700 font-semibold mb-2 text-base">
+                Previous Month Balance
+              </Text>
+              <Controller
+                control={control}
+                name="previous_month_balance"
+                render={({ field: { onChange, value } }) => (
+                  <View>
+                    <View className="flex-row items-center bg-white rounded-xl px-4 py-3 border border-gray-200 shadow-sm">
+                      <CurrencyInr size={20} color="#6b7280" weight="duotone" />
+                      <TextInput
+                        className="flex-1 ml-3 text-gray-800 text-base"
+                        placeholder="0"
+                        placeholderTextColor="#9ca3af"
+                        value={value?.toString()}
+                        onChangeText={(text) => onChange(Number(text) || 0)}
+                        keyboardType="numeric"
+                      />
+                    </View>
+                    {errors.previous_month_balance && (
+                      <View className="flex-row items-center mt-2">
+                        <Warning size={14} color="#ef4444" weight="fill" />
+                        <Text className="text-red-500 text-xs ml-1">
+                          {errors.previous_month_balance.message}
                         </Text>
                       </View>
                     )}
